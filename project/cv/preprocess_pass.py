@@ -1,7 +1,12 @@
-from project.cv.processed_image import ProcessedImage
 from project.pipeline import DetectionPass, IOComponent
 from project.utils.image_data import ImageData
 
+from project.pipeline import IOComponent
+
+
+class ProcessedImage(IOComponent):
+    def __init__(self, image):
+        self.image = image
 
 
 

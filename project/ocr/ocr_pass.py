@@ -1,6 +1,12 @@
-from project.cv.processed_image import ProcessedImage
-from project.ocr.ocr_data import OcrData
+from project.cv.preprocess_pass import ProcessedImage
 from project.pipeline import DetectionPass
+from project.pipeline import IOComponent
+
+
+# TODO: Temporary Constructor
+class OcrData(IOComponent):
+    pass
+
 
 
 

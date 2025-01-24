@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="Black">
+    <option name="sdkName" value="Python 3.11 virtualenv at ~/PycharmProjects/texttovox_back/.venv (2)" />
+  </component>
   <component name="GithubDefaultAccount">
     <option name="defaultAccountId" value="c035359a-4298-4c02-8aac-bdd423702e0f" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.11 (OcrNutritionInfo)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.11 virtualenv at ~/PycharmProjects/texttovox_back/.venv (2)" project-jdk-type="Python SDK" />
 </project>
