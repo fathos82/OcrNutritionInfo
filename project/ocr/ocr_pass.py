@@ -1,4 +1,3 @@
-from project.cv.preprocess_pass import ProcessedImage
 from project.pipeline import DetectionPass
 from project.pipeline import IOComponent
 
@@ -11,6 +10,6 @@ class OcrData(IOComponent):
 
 
 class OcrPass(DetectionPass):
-    def run(self, start_input:ProcessedImage) -> OcrData:
+    def run(self, start_input) -> OcrData:
         print("Ocr Pass")
         return OcrData()

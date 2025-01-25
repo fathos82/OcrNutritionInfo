@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
+from copy import copy
 from typing import List, Type, TypeVar, Generic
 
-from project.utils.image_data import ImageData
 
 
 class IOComponent(ABC):
@@ -12,17 +12,16 @@ class DetectionPass(ABC, Generic[I, O]):
     def __init__(self):
         self.original_image = None
 
-    def set_original_image(self, image_data: ImageData):
+    def set_original_image(self, image_data):
         self.original_image = image_data.image
     def get_original_image(self):
-
-        return self.get_original_image()
+        return copy(self.original_image)
     @abstractmethod
     def run(self, input_data: I) -> O:
         pass
 
 
-
+# TODO: FIX TYPE IMAGE_DATA
 class Pipeline:
     def __init__(self):
         self.passes:List[DetectionPass] = []
@@ -32,13 +31,13 @@ class Pipeline:
             self.passes.append(detection_pass_type())
         return self
 
-    def run(self, image_data:ImageData):
+    def run(self, image_data) -> IOComponent:
         current_input = image_data
         original_image = image_data
         for detection_pass in self.passes:
             detection_pass.set_original_image(original_image)
             current_input = detection_pass.run(current_input)
-
+        return current_input
         #TODO: CLEAR PASSES
         
 
