@@ -16,12 +16,14 @@ import difflib
 class OcrData(IOComponent):
     def __init__(self, word_set):
         self.word_set = word_set
+    def __str__(self):
+        return str(self.word_set)
 
 
 
 
 
-class OcrPass(DetectionPass):
+class OcrPassTester(DetectionPass):
     def __init__(self):
         super().__init__()
         self.options = ["SODIO", "AÇUCAR ADICIONADO", "GORDURA SATURADA"]
@@ -35,31 +37,30 @@ class OcrPass(DetectionPass):
             match = difflib.get_close_matches(word_upper, self.options, cutoff=confidence_threshold)
             words_set.update(match)
         return words_set
-    def run(self, start_input:ContoursData) -> OcrData:
+    def run(self, start_input:ImageData) -> OcrData:
+        # TODO: Pre PROCESSING ANG GET CONTOURS MAKE A PASS OF THIS
         words_set = set()
-        image = self.get_original_image()
-        for contour in start_input.contours:
-            x, y, w, h = cv2.boundingRect(contour)
-            crop_image = image[y:y+h, x:x+w]
-            gray = cv2.cvtColor(crop_image, cv2.COLOR_BGR2GRAY)
-            blur = cv2.GaussianBlur(gray, (3, 3), 0) #TODO: --> POSSIVEL NECESSIDADE DE AJUSTES
-            otsu = cv2.threshold(blur, 0, 255, cv2.THRESH_OTSU)[1]
-            inv = cv2.bitwise_not(otsu)
-            transformed = self.thick(inv)
+        image = start_input.image
 
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        blur = cv2.GaussianBlur(gray, (3, 3), 0) #TODO: --> POSSIVEL NECESSIDADE DE AJUSTES
+        otsu = cv2.threshold(blur, 0, 255, cv2.THRESH_OTSU)[1]
+        inv = cv2.bitwise_not(otsu)
+        transformed = self.thick(inv)
+
+
+        for i in range(3,13):
             start = time()
-            custom_config = '--psm 12'
-            # print(custom_config)
+            custom_config = '--psm '+str(i)
+            print(custom_config)
             text = pytesseract.image_to_string(transformed, config=custom_config)
-            words_set.update(self.filter_right_words(text.split()))
-            # for i in range(3,13):
-            #     start = time()
-            #     custom_config = '--psm '+str(i)
-            #     # print(custom_config)
-            #     text = pytesseract.image_to_string(transformed, config=custom_config)
-            #     words_set.update(self.filter_right_words(text.split()))
-            end = time()
-            # print("Time Taken:", end-start)
+            local_words_set = self.filter_right_words(text.split())
+            print(local_words_set)
+            words_set.update(local_words_set)
+        cv2.imshow('OCR', transformed)
+        cv2.imshow('otsu', otsu)
+        end = time()
+        # print("Time Taken:", end-start)
 
         return OcrData(words_set)
     def thick(self, image):

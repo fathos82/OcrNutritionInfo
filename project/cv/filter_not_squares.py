@@ -16,7 +16,4 @@ class FilterNotSquares(DetectionPass):
 
             if len(approx) == 4:
                 filtered_contours.append(contour)
-                x, y, w, h = cv2.boundingRect(contour)
-                cv2.rectangle(temporary_image, (x, y), (x + w, y + h), (255, 0, 0), 2)
-
         return ContoursData(filtered_contours, temporary_image)
