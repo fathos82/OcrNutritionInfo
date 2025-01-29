@@ -15,5 +15,10 @@ class PreProcessPass(DetectionPass):
         beta = 50
         ajusted_image = cv2.convertScaleAbs(median, alpha=alpha, beta=beta)
         otsu = cv2.threshold(ajusted_image, 127, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+        inv = cv2.bitwise_not(otsu)
+        kernel = np.ones((2, 2), np.uint8)
+        transformed = cv2.dilate(inv, kernel, iterations=3)
+        otsu = cv2.bitwise_not(transformed)
+        # cv2.imshow('otsu', otsu)
         # TODO: FINALIZE PRE PROCESSING, TRANSFORMATIONS
         return ImageData.from_image(otsu)

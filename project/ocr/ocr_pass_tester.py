@@ -38,7 +38,7 @@ class OcrPassTester(DetectionPass):
             words_set.update(match)
         return words_set
     def run(self, start_input:ImageData) -> OcrData:
-        # TODO: Pre PROCESSING ANG GET CONTOURS MAKE A PASS OF THIS
+        # TODO: Pre PROCESSING ANG GET CONTOURS
         words_set = set()
         image = start_input.image
 
@@ -46,7 +46,8 @@ class OcrPassTester(DetectionPass):
         blur = cv2.GaussianBlur(gray, (3, 3), 0) #TODO: --> POSSIVEL NECESSIDADE DE AJUSTES
         otsu = cv2.threshold(blur, 0, 255, cv2.THRESH_OTSU)[1]
         inv = cv2.bitwise_not(otsu)
-        transformed = self.thick(inv)
+        transformed = self.thick(otsu)
+
 
 
         for i in range(3,13):
@@ -65,7 +66,7 @@ class OcrPassTester(DetectionPass):
         return OcrData(words_set)
     def thick(self, image):
         negated = cv2.bitwise_not(image)
-        kernel = np.ones((1,1), np.uint8)
+        kernel = np.ones((2,2), np.uint8)
         transformed = cv2.dilate(negated, kernel, iterations=1)
         image = cv2.bitwise_not(transformed)
         return  image
