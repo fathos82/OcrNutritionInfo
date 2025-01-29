@@ -12,5 +12,9 @@ class FilterByArea(DetectionPass):
 
     def run(self, input_data: ContoursData) -> ContoursData:
         filtered_contours = list(filter(lambda c : self.max_area > cv2.contourArea(c) > self.min_area,input_data.contours))
-
+        # image = self.get_original_image()
+        # for contour in filtered_contours:
+        #     x, y, w, h = cv2.boundingRect(contour)
+        #     cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)
+        # cv2.imshow("image", image)
         return ContoursData(filtered_contours, None)

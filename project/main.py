@@ -1,152 +1,61 @@
-# TODO: Pesquisar flake8, black, sphinx
-from time import time
+from project.utils.testes import run_from_video, run_from_image
 
-import cv2
-
-from project.cv.filter_by_area import FilterByArea
-from project.cv.filter_not_squares import FilterNotSquares
-from project.cv.find_contours import FindContours
-from project.cv.preprocess_pass import PreProcessPass
-from project.ocr.ocr_pass import OcrPass, OcrData
-from project.ocr.ocr_pass_tester import OcrPassTester
-from project.pipeline import Pipeline, DetectionPass
-from project.utils.image_data import ImageData
-
-
-#TODO: MultThreading Partion,
-# Change Lib To Process Video,
-# IMPROVE FILTERING,
-# RESIZE IMAGEM, CROP
-# IMAGE (CENTER)
-# APLYING N TESSERECAT CONFIG
-
-
-def run_from_video(id):
-
-    video_config_set = [
-        {
-            "name_file": "1.mp4",
-            "ocr_options": [5]
-        },
-        {
-            "name_file": "2.mp4",
-            "ocr_options": [5]
-        },
-        {
-            "name_file": "3.mp4",
-            "ocr_options": [12]
-        },
-        {
-            "name_file": "4.mp4",
-            "ocr_options": [6,12]
-        },
-    ]
-
-    video_config = video_config_set[id]
-    # MY VERSION:
-    pipeline = Pipeline().add_passes(PreProcessPass, FindContours,  FilterNotSquares, OcrPass(ocr_options=video_config["ocr_options"])) # TODO: CRIAR PASSO RESIZE
-
-
-    cap = cv2.VideoCapture(f"project/res/videos/{video_config['name_file']}")
-    ret, frame = cap.read()
-    frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
-    data: OcrData = pipeline.run(ImageData.from_image(frame))
-    word_set = set()
-    start_total = time()
-
-    skip_frames = 2
-    counter = 0
-
-    try:
-        while cap.isOpened():
-            if not ret:
-                print("Can't read frame")
-                break
-            ret, frame = cap.read()
-            frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
-            counter+=1
-            if counter % skip_frames == 0:
-                data: OcrData = pipeline.run(ImageData.from_image(frame))
-                if len(word_set) > 0:
-                    raise Exception()
-                end = time()
-            word_set.update(data.word_set)
-
-    except Exception as e:
-        end_total = time()
-        print("Total time:", end_total - start_total)
-        print(word_set)
-    finally:
-        print(word_set)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+run_from_image(2)
 
 
 
-def run_from_image(id):
-    image_config_set = [
-
-        {
-            "name_file": "2.jpg",
-            "ocr_options": [6, 12]
-        },
-        {
-            "name_file": "3.jpeg",
-            "ocr_options": [6, 12]
-        }
-    ]
 
 
 
-# pipeline = Pipeline().add_passes(PreProcessPass, FindContours, FilterByArea(max_area=1500), OcrPass(ocr_options=[5,6,12]))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# pipeline = Pipeline().add_passes(PreProcessPass, FindContours, FilterNotSquares) # TODO: CRIAR PASSO RESIZE
 #
-# image = cv2.imread("project/res/images/1.jpg")
-# # image = cv2.resize(image, (0,0), fx=0.5, fy=0.5)
-# data:OcrData = pipeline.run(ImageData.from_image(image))
-# print(data.word_set)
-# cv2.waitKey(0)
-
-
-run_from_video(3)
-
-
-# run_from_image()
-
-
-
-
-
-
-
-
-pipeline = Pipeline().add_passes(PreProcessPass, FindContours, FilterByArea(min_area=300, max_area=6000)) # TODO: CRIAR PASSO RESIZE
-
-
-
-cap = cv2.VideoCapture(f"project/res/videos/3.mp4")
-ret, frame = cap.read()
-frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
-data: OcrData = pipeline.run(ImageData.from_image(frame))
-skip_frames = 2
-counter = 0
-
-try:
-    while cap.isOpened():
-        if not ret:
-            print("Can't read frame")
-            break
-        ret, frame = cap.read()
-        frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
-        counter+=1
-        if counter % skip_frames == 0:
-            data = pipeline.run(ImageData.from_image(frame))
-        cv2.waitKey(0)
-
-except Exception as e:
-    end_total = time()
-finally:
-
-    cv2.destroyAllWindows()
+#
+#
+# cap = cv2.VideoCapture(f"project/res/videos/3.mp4")
+# ret, frame = cap.read()
+# frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
+# data: OcrData = pipeline.run(ImageData.from_image(frame))
+# skip_frames = 2
+# counter = 0
+#
+# try:
+#     while cap.isOpened():
+#         if not ret:
+#             print("Can't read frame")
+#             break
+#         ret, frame = cap.read()
+#         frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
+#         counter+=1
+#         if counter % skip_frames == 0:
+#             data = pipeline.run(ImageData.from_image(frame))
+#         cv2.waitKey(0)
+#
+# except Exception as e:
+#     end_total = time()
+# finally:
+#
+#     cv2.destroyAllWindows()
 
 
 
