@@ -1,6 +1,11 @@
+import cv2
+import numpy as np
+
+from project.cv.preprocess_pass import PreProcessPass
+from project.pipeline import Pipeline
+from project.utils.image_data import ImageData
 from project.utils.testes import run_from_video, run_from_image
 
-run_from_image(2)
 
 
 
@@ -8,13 +13,31 @@ run_from_image(2)
 
 
 
+cap = cv2.VideoCapture("project/res/videos/1.mp4")
+ret, frame = cap.read()
+frame = cv2.resize(frame, (640, 480))
+frames_amount = 5
+shape = frame.shape
+acumulated_mask = np.ones((shape[0], shape[1]), dtype=np.uint8) * 255
 
+pipeline1 = Pipeline().add_passes(PreProcessPass) # TODO: CRIAR PASSO RESIZE
 
-
-
-
-
-
+is_first = True
+while cap.isOpened():
+    if not ret:
+        break
+    frame = cv2.resize(frame, (640, 480))
+    if cv2.waitKey(0) == ord('r') or is_first:
+        is_first = False
+        for qnt_frames in range(frames_amount):
+            ret, frame = cap.read()
+            frame = cv2.resize(frame, (640, 480))
+            mask = (pipeline1.run(ImageData.from_image(frame))).image
+            acumulated_mask = cv2.bitwise_and(acumulated_mask, mask)
+            cv2.imshow('frame', frame)
+            cv2.imshow('otsu', mask)
+            cv2.imshow('acumulated_mask', acumulated_mask)
+    acumulated_mask = np.ones_like(acumulated_mask, dtype=np.uint8) * 255
 
 
 
