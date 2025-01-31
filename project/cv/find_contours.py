@@ -5,8 +5,7 @@ from project.utils.image_data import ImageData
 
 
 class ContoursData(IOComponent):
-    def __init__(self, contours, temporary_image):
-        self.temporary_image = temporary_image
+    def __init__(self, contours):
         self.contours = contours
 
 
@@ -19,4 +18,4 @@ class FindContours(DetectionPass):
         #     x, y, w, h = cv2.boundingRect(contour)
         #     cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)
         # cv2.imshow("contours", image)
-        return ContoursData(contours, None)
+        return ContoursData(contours)
