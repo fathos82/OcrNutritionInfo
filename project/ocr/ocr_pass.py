@@ -17,11 +17,14 @@ import difflib
 class OcrData(IOComponent):
     def __init__(self, word_set):
         self.word_set = word_set
+    def __str__(self):
+        return "OcrData(word_set={})".format(self.word_set)
 
 
 class OcrPass(DetectionPass):
-    def __init__(self, ocr_options: List[int] = [6, 12]):
+    def __init__(self, temporary_image_data: ImageData, ocr_options: List[int] = [6, 12]):
         super().__init__()
+        self.temporary_image_data = temporary_image_data
         self.options = ["SODIO", "AÇUCAR ADICIONADO", "GORDURA SATURADA"]
         self.ocr_options = ocr_options
 
@@ -37,7 +40,8 @@ class OcrPass(DetectionPass):
 
     def run(self, start_input: ContoursData) -> OcrData:
         words_set = set()
-        image = self.get_original_image()
+        # image = self.get_original_image()
+        image = self.temporary_image_data.image
         for contour in start_input.contours:
             x, y, w, h = cv2.boundingRect(contour)
             crop_image = image[y:y + h, x:x + w]
