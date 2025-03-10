@@ -17,6 +17,7 @@ class FilterByLength(DetectionPass):
 
         filtered_contours = [contour for contour in input_data.contours if
                              self.min_length < cv2.arcLength(contour, True) < self.max_length]
+
         # print(len(filtered_contours))
         # image = self.get_original_image()
         # for contour in filtered_contours:

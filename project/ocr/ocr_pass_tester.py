@@ -40,7 +40,7 @@ class OcrPassTester(DetectionPass):
     def run(self, start_input:ImageData) -> OcrData:
         # TODO: Pre PROCESSING ANG GET CONTOURS
         words_set = set()
-        image = start_input.image
+        image = self.get_original_image()
 
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         blur = cv2.GaussianBlur(gray, (3, 3), 0) #TODO: --> POSSIVEL NECESSIDADE DE AJUSTES

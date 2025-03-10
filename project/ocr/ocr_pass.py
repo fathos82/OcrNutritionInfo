@@ -22,13 +22,13 @@ class OcrData(IOComponent):
 
 
 class OcrPass(DetectionPass):
-    def __init__(self, ocr_options: List[int] = [6, 12], number_cores=mp.cpu_count()//2):
+    def __init__(self, ocr_options: List[int] = [6, 12, 5], number_cores=mp.cpu_count()//2):
         super().__init__()
         self.options = ["SODIO", "AÇUCAR ADICIONADO", "GORDURA SATURADA"]
         self.ocr_options = ocr_options
         self.number_cores = number_cores
 
-    def filter_right_words(self, words, confidence_threshold=0.6):
+    def filter_right_words(self, words, confidence_threshold=0.8):
         words_set = set()
         for word in words:
             cleaned_word = re.sub(r'[^a-zA-Z0-9\s]', '', word)
@@ -50,7 +50,8 @@ class OcrPass(DetectionPass):
         for opt in self.ocr_options:
             custom_config = f'--psm {opt}'
             text = pytesseract.image_to_string(transformed, config=custom_config)
-            words_set.update(self.filter_right_words(text.split()))
+            word = self.filter_right_words(text.split())
+            words_set.update(word)
         return words_set
 
     def run(self, start_input: ContoursData) -> OcrData:
