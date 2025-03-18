@@ -2,10 +2,13 @@ from time import time
 
 import cv2
 import numpy as np
+
+from project.cv.black_filter import BlackFilter
 from project.cv.filter_by_area import FilterByArea
 from project.cv.filter_by_length import FilterByLength
 from project.cv.find_contours import FindContours
 from project.cv.preprocess_pass import PreProcessPass
+from project.cv.white_filter import WhiteFilter
 from project.ocr.ocr_pass import OcrPass, OcrData
 from project.ocr.ocr_pass_tester import OcrPassTester
 from project.pipeline import Pipeline
@@ -19,46 +22,29 @@ from project.utils.image_data import ImageData
 # FINALIZAR ESTRTURA DE PIPELINE
 # CRIAR ALGORITIMO IMPIRICO PARA TENTAR OTIMIZAR A RESPOSTAR
 
-
-pipeline = Pipeline().add_passes(PreProcessPass, FindContours, FilterByLength, OcrPass)  # TODO: CRIAR PASSO RESIZE
-
-cap = cv2.VideoCapture(f"project/res/videos/Vídeo 11.mp4")
-ret, frame = cap.read()
-frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
-data = pipeline.run(ImageData.from_image(frame))
-word_set = set()
-
-skip_frames = 2
-counter = 0
-start = time()
+def resize_image(image, new_width=720):
+    height, width = image.shape[:2]
+    new_height = int(height * new_width / width)
+    new_image = cv2.resize(image, (new_width, new_height))
+    return new_image
 
 
-try:
-    while cap.isOpened():
-        if not ret:
-            print("Can't read frame")
-            break
-        ret, frame = cap.read()
-        frame = cv2.resize(frame, (0, 0), fx=1, fy=1)
-        counter += 1
-        if counter % skip_frames == 0:
-            data: OcrData = pipeline.run(ImageData.from_image(frame))
-            if len(word_set) > 0:
-                raise Exception()
-        # cv2.imshow("frame", frame)
-        # key = cv2.waitKey(0)
-        # if key == ord('r'):
-        #     continue
+pipeline = Pipeline().add_passes(BlackFilter)  # TODO: CRIAR PASSO RESIZE
+cap = cv2.VideoCapture('project/res/videos/Vídeo 6.mp4')
 
-        word_set.update(data.word_set)
-except Exception as e:
-    print(e)
+while cap.isOpened():
+    ret, frame = cap.read()
+    if not ret:
+        break
 
-finally:
-    print("ALTO EM: " + str(word_set))
-    end = time()
-    print("Total time: " + str(end - start))
-    cv2.destroyAllWindows()
+    frame = resize_image(frame)
+    pipeline.run(ImageData.from_image(frame))
+    cv2.imshow('frame', frame)
+    cv2.waitKey(0)
+
+
+
+
 
 
 
