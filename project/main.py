@@ -6,6 +6,7 @@ import numpy as np
 from project.cv.black_filter import BlackFilter
 from project.cv.filter_by_area import FilterByArea
 from project.cv.filter_by_length import FilterByLength
+from project.cv.filter_mask_by_area import FilterMaskByArea
 from project.cv.find_contours import FindContours
 from project.cv.preprocess_pass import PreProcessPass
 from project.cv.white_filter import WhiteFilter
@@ -29,8 +30,8 @@ def resize_image(image, new_width=720):
     return new_image
 
 
-pipeline = Pipeline().add_passes(BlackFilter)  # TODO: CRIAR PASSO RESIZE
-cap = cv2.VideoCapture('project/res/videos/Vídeo 6.mp4')
+pipeline = Pipeline().add_passes(BlackFilter, FindContours, FilterByArea)  # TODO: CRIAR PASSO RESIZE
+cap = cv2.VideoCapture('project/res/videos/Vídeo 4.mp4')
 
 while cap.isOpened():
     ret, frame = cap.read()

@@ -19,6 +19,6 @@ class BlackFilter(DetectionPass):
         kChannel = (kChannel * 255).astype(np.uint8)
         binaryThresh = 160
         _, binaryImage = cv2.threshold(kChannel, binaryThresh, 255, cv2.THRESH_BINARY)
-        cv2.imshow('kChannel', kChannel)
-        cv2.imshow('binaryImage', binaryImage)
-        return ImageData.from_image(kChannel)
+        # cv2.imshow('kChannel', kChannel)
+        # cv2.imshow('binaryImage', binaryImage)
+        return ImageData.from_image(binaryImage)

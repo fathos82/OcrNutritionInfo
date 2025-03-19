@@ -1,25 +1,17 @@
+import numpy as np
+
+from project.pipeline import DetectionPass, IOComponent
+from project.utils.image_data import ImageData
+
 import cv2
 
-from project.cv.find_contours import ContoursData
-from project.pipeline import DetectionPass, I, O
 
-
-
-class FilterNotSquares(DetectionPass):
-    def run(self, input_data: ContoursData) -> ContoursData:
-        temporary_image = input_data.temporary_image
-        contours = input_data.contours
-        filtered_contours = []
-        for contour in contours:
-            epsilon = 0.02 * cv2.arcLength(contour, True)
-            approx = cv2.approxPolyDP(contour, epsilon, True)
-
-            if len(approx) == 4:
-                filtered_contours.append(contour)
-        # image  = self.get_original_image()
-        # for contour in filtered_contours:
-        #     x, y, w, h = cv2.boundingRect(contour)
-        #     print( x, y, w, h )
-        #     cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        # cv2.imshow("Image", image)
-        return ContoursData(filtered_contours, temporary_image)
+class WhiteFilter(DetectionPass):
+    def run(self, input_data: ImageData) -> ImageData:
+        img = input_data.image
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        lower_values = np.array([37, 0, 131])
+        upper_values = np.array([170, 25, 152])
+        mask = cv2.inRange(hsv, lower_values, upper_values)
+        cv2.imshow('mask', mask)
+        return ImageData.from_image(mask)
