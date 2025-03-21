@@ -19,7 +19,7 @@ class DetectionPass(ABC, Generic[I, O]):
         self.original_image = image_data
 
     def get_original_image(self):
-        return self.original_image
+        return getattr(self.original_image, 'image', None)
 
     @abstractmethod
     def run(self, input_data: I) -> O:

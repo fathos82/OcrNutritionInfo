@@ -25,5 +25,5 @@ class Cropper(DetectionPass):
 
         new_image = img[new_y : img.shape[0] - new_y, new_x :img.shape[1] - new_x]
         # cv2.imshow("Cropped", new_image)
-        self.original_image.from_image(new_image)
+        self.original_image.image = new_image
         return ImageData.from_image(new_image)
