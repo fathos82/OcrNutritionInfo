@@ -8,7 +8,7 @@ import cv2
 
 class FilterMaskByArea(DetectionPass):
 
-    def __init__(self, minArea=100):
+    def __init__(self, minArea=150):
         super().__init__()
         self.minArea = minArea
     def run(self, input_data: ImageData) -> ImageData:
@@ -23,5 +23,5 @@ class FilterMaskByArea(DetectionPass):
         # Filter the labeled pixels based on the remaining labels,
         # assign pixel intensity to 255 (uint8) for the remaining pixels
         filteredImage = np.where(np.isin(labeledImage, remainingComponentLabels) == True, 255, 0).astype('uint8')
-        cv2.imshow('filteredImage', filteredImage)
+        # cv2.imshow('filteredImage', filteredImage)
         return ImageData.from_image(mask)

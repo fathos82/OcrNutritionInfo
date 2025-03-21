@@ -7,9 +7,12 @@ import pytesseract
 import difflib
 import multiprocessing as mp
 
+from line_profiler_pycharm import profile
+
 from project.cv.find_contours import ContoursData
 from project.pipeline import DetectionPass
 from project.pipeline import IOComponent
+from project.utils.image_data import ImageData
 
 
 # TODO: Temporary Constructor
@@ -22,7 +25,7 @@ class OcrData(IOComponent):
 
 
 class OcrPass(DetectionPass):
-    def __init__(self, ocr_options: List[int] = [6, 12, 5], number_cores=mp.cpu_count()//2):
+    def __init__(self, ocr_options: List[int] = [6, 12], number_cores=mp.cpu_count()//2):
         super().__init__()
         self.options = ["SODIO", "AÇUCAR ADICIONADO", "GORDURA SATURADA"]
         self.ocr_options = ocr_options
@@ -53,9 +56,10 @@ class OcrPass(DetectionPass):
             word = self.filter_right_words(text.split())
             words_set.update(word)
         return words_set
-
+    @profile
     def run(self, start_input: ContoursData) -> OcrData:
-        image = self.get_original_image()
+        image_data:ImageData = self.get_original_image()
+        image = image_data.image
 
         with mp.Pool(processes=self.number_cores) as pool:
             results = pool.starmap(self.process_contour, [(contour, image) for contour in start_input.contours])

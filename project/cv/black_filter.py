@@ -1,24 +1,30 @@
 import cv2
 import numpy as np
+from line_profiler_pycharm import profile
 
+
+
+import cv2
+import numpy as np
 from project.pipeline import DetectionPass
 from project.utils.image_data import ImageData
 
 
 class BlackFilter(DetectionPass):
+    @profile
     def run(self, input_data: ImageData) -> ImageData:
         img = input_data.image
 
-        # Certifique-se de que a imagem está no formato correto
-        img = img.astype(np.float32) / 255.0  # Usa np.float32 em vez de np.float
+        # Certifique-se de que a imagem está em uint8 para evitar conversões desnecessárias
+        if img.dtype != np.uint8:
+            img = (img * 255).astype(np.uint8)
 
-        # Calcular o canal K corretamente
-        kChannel = 1 - np.max(img, axis=2)
+        # Calcular o canal K diretamente sem conversões extras
+        kChannel = 255 - np.max(img, axis=2)  # Forma otimizada
 
-        # Converter para uint8 corretamente
-        kChannel = (kChannel * 255).astype(np.uint8)
-        binaryThresh = 160
-        _, binaryImage = cv2.threshold(kChannel, binaryThresh, 255, cv2.THRESH_BINARY)
-        # cv2.imshow('kChannel', kChannel)
-        # cv2.imshow('binaryImage', binaryImage)
+        # cv2.imshow("Black Filter", kChannel)
+
+        # Aplicar threshold binário diretamente
+        _, binaryImage = cv2.threshold(kChannel, 160, 255, cv2.THRESH_BINARY)
+
         return ImageData.from_image(binaryImage)
