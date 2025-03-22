@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from copy import copy
 from typing import List, Type, TypeVar, Generic, Union
 
 from line_profiler_pycharm import profile
@@ -19,7 +20,7 @@ class DetectionPass(ABC, Generic[I, O]):
         self.original_image = image_data
 
     def get_original_image(self):
-        return getattr(self.original_image, 'image', None)
+        return copy(getattr(self.original_image, 'image', None))
 
     @abstractmethod
     def run(self, input_data: I) -> O:

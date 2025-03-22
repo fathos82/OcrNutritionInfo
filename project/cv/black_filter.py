@@ -21,7 +21,7 @@ class BlackFilter(DetectionPass):
 
         # Calcular o canal K diretamente sem conversões extras
         kChannel = 255 - np.max(img, axis=2)  # Forma otimizada
-        cv2.imshow('kChannel', kChannel)
+        # cv2.imshow('kChannel', kChannel)
 
         # cv2.imshow("Black Filter", kChannel)
 

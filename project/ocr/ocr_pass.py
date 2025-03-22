@@ -1,3 +1,4 @@
+import random
 import re
 from time import time
 from typing import List
@@ -25,18 +26,21 @@ class OcrData(IOComponent):
 
 
 class OcrPass(DetectionPass):
-    def __init__(self, ocr_options: List[int] = [6, 12], number_cores=mp.cpu_count()//2):
+    def __init__(self, ocr_options: List[int] = [6, 12,5], number_cores=mp.cpu_count()//2):
         super().__init__()
-        self.options = ["SODIO", "AÇUCAR ADICIONADO", "GORDURA SATURADA"]
+        # TODO: Associar: AGUCAR, AÇUCAR, ADICIONADO -> AÇUCAR ADICIONADO
+        # TODO: Associar: SATURADA, GORDURA -> GORDURA SATURADA
+        self.options = ["SODIO", "AÇUCAR ADICIONADO", "GORDURA SATURADA", "AÇUCAR", "AGUCAR"]
         self.ocr_options = ocr_options
         self.number_cores = number_cores
 
-    def filter_right_words(self, words, confidence_threshold=0.8):
+    def filter_right_words(self, words, confidence_threshold=0.6):
         words_set = set()
         for word in words:
             cleaned_word = re.sub(r'[^a-zA-Z0-9\s]', '', word)
             cleaned_word = cleaned_word.replace('0', 'O').replace('1', 'I')
             word_upper = cleaned_word.upper()
+            print(word_upper)
             match = difflib.get_close_matches(word_upper, self.options, cutoff=confidence_threshold)
             words_set.update(match)
         return words_set
@@ -47,19 +51,26 @@ class OcrPass(DetectionPass):
         gray = cv2.cvtColor(crop_image, cv2.COLOR_BGR2GRAY)
         blur = cv2.GaussianBlur(gray, (3, 3), 0)  # TODO: Possível necessidade de ajustes
         otsu = cv2.threshold(blur, 0, 255, cv2.THRESH_OTSU)[1]
-        transformed = self.thick(otsu)
+
+        # cv2.imshow(f"OTSU {x,y}", otsu)
+        # transformed = self.thick(otsu)
 
         words_set = set()
         for opt in self.ocr_options:
             custom_config = f'--psm {opt}'
-            text = pytesseract.image_to_string(transformed, config=custom_config)
+            text = pytesseract.image_to_string(otsu, config=custom_config)
+
             word = self.filter_right_words(text.split())
+
             words_set.update(word)
         return words_set
     @profile
     def run(self, start_input: ContoursData) -> OcrData:
-        image_data:ImageData = self.get_original_image()
-        image = image_data.image
+        image = self.get_original_image()
+
+        # contours = start_input.contours
+        # for contour in contours:
+        #     words_set = self.process_contour(contour, image)
 
         with mp.Pool(processes=self.number_cores) as pool:
             results = pool.starmap(self.process_contour, [(contour, image) for contour in start_input.contours])
