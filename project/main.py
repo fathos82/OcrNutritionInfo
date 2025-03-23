@@ -37,7 +37,7 @@ def get_time_code(time_ms):
 
 # Video 02 sucesso
 
-video_path = 'project/res/frames/Vídeo 15_00_00_00_600.jpg'
+video_path = 'project/res/videos/Vídeo 1.mp4'
 
 cap = cv2.VideoCapture(video_path)
 skip_frames  = 2
@@ -46,35 +46,37 @@ count_frame = 0
 pipeline = Pipeline().add_passes(Cropper(0.8), BlackFilter, FilterMaskByArea, FindContours, FilterByArea, OcrPass)
 
 
-pipelines ={
-    'BlackSearcher': [],
+# pipelines ={
+#     'BlackSearcher': [],
+#
+# }
 
-}
+black_searcher = []
 
 while cap.isOpened():
     tick = cv2.getTickCount()
-    print(tick)
     ret, frame = cap.read()
     if not ret:
         print('Video not found.')
         break
     result = pipeline.run(ImageData.from_image(resize_image(frame)))
-    print(result)
 
     # count_frame += 1
     # if count_frame % skip_frames == 0:
     #     continue
     # cv2.imshow('Video', frame)
-    k = cv2.waitKey(0) & 0xFF
+    # k = cv2.waitKey(0) & 0xFF
     # if k == ord('c'):
     #     print(cap.get(cv2.CAP_PROP_POS_MSEC))
-
+    #
     #     capture_frame(frame, get_time_code(cap.get(cv2.CAP_PROP_POS_MSEC)), video_path)
     # if k == ord('q') :
     #     break
 
-    # result:PossibilitiesData = pipeline.run(ImageData.from_image(frame))
-    # pipelines['BlackSearcher'].extend(result.possibilities)
+    result:PossibilitiesData = pipeline.run(ImageData.from_image(frame))
+    black_searcher.extend(result.possibilities)
+
+print(len(black_searcher))
 
 
 
@@ -82,3 +84,13 @@ while cap.isOpened():
 
 
 
+# Dados para Teste
+# Resultados do Dados
+# Selecionar Frames
+# Coletar Informações
+
+
+# Nome do Video
+# Media de Contornos
+# Momento Inferencia Bem Sucedida
+# Opção de OCR utilizada

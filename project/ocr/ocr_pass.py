@@ -25,23 +25,33 @@ class OcrData(IOComponent):
         return "OcrData(word_set={})".format(self.word_set)
 
 
+
+
+
 class OcrPass(DetectionPass):
     def __init__(self, ocr_options: List[int] = [6, 12,5], number_cores=mp.cpu_count()//2):
         super().__init__()
         # TODO: Associar: AGUCAR, AÇUCAR, ADICIONADO -> AÇUCAR ADICIONADO
         # TODO: Associar: SATURADA, GORDURA -> GORDURA SATURADA
-        self.options = ["SODIO", "AÇUCAR ADICIONADO", "GORDURA SATURADA", "AÇUCAR", "AGUCAR"]
+        self.options = ["SODIO", "AÇUCAR ADICIONADO", "GORDURA SATURADA", "AÇUCAR", "AGUCAR", "ADICIONADO", "SATURADA", "GORDURA"]
         self.ocr_options = ocr_options
         self.number_cores = number_cores
 
-    def filter_right_words(self, words, confidence_threshold=0.6):
+    def swap_to_right(self, match):
+        if match in ["AÇUCAR", "AGUCAR", "ADICIONADO"]:
+            return "AÇUCAR ADICIONADO"
+        elif match in ["SATURADO", "GORDURA"]:
+            return "GORDURA SATURADA"
+        return match
+
+    def filter_right_words(self, words, confidence_threshold=0.7):
         words_set = set()
         for word in words:
             cleaned_word = re.sub(r'[^a-zA-Z0-9\s]', '', word)
             cleaned_word = cleaned_word.replace('0', 'O').replace('1', 'I')
             word_upper = cleaned_word.upper()
-            print(word_upper)
             match = difflib.get_close_matches(word_upper, self.options, cutoff=confidence_threshold)
+            match = self.swap_to_right(match)
             words_set.update(match)
         return words_set
 
