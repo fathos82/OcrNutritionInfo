@@ -18,8 +18,11 @@ from project.utils.image_data import ImageData
 
 # TODO: Temporary Constructor
 class OcrData(IOComponent):
-    def __init__(self, word_set):
+    def __init__(self, word_set, options, len_contours, area_contours):
+        self.options = options
         self.word_set = word_set
+        self.len_contours = len_contours
+        self.area_contours  = area_contours
 
     def __str__(self):
         return "OcrData(word_set={})".format(self.word_set)
@@ -31,18 +34,25 @@ class OcrData(IOComponent):
 class OcrPass(DetectionPass):
     def __init__(self, ocr_options: List[int] = [6, 12,5], number_cores=mp.cpu_count()//2):
         super().__init__()
-        # TODO: Associar: AGUCAR, AÇUCAR, ADICIONADO -> AÇUCAR ADICIONADO
-        # TODO: Associar: SATURADA, GORDURA -> GORDURA SATURADA
-        self.options = ["SODIO", "AÇUCAR ADICIONADO", "GORDURA SATURADA", "AÇUCAR", "AGUCAR", "ADICIONADO", "SATURADA", "GORDURA"]
+        self.options = ["SODIO", "AÇUCAR ADICIONADO", "GORDURA SATURADA", "AÇUCAR", "AGUCAR", "]", "SATURADA", "GORDURA"]
         self.ocr_options = ocr_options
         self.number_cores = number_cores
 
-    def swap_to_right(self, match):
-        if match in ["AÇUCAR", "AGUCAR", "ADICIONADO"]:
-            return "AÇUCAR ADICIONADO"
-        elif match in ["SATURADO", "GORDURA"]:
-            return "GORDURA SATURADA"
+    def apply_corrections(self, match):
+
+        corrections = {
+            frozenset(["AÇUCAR", "AGUCAR", "ADICIONADO, AÇUCAR ADICIONADO"]): "AÇUCAR ADICIONADO",
+            frozenset(["SATURADA", "GORDURA"]): "GORDURA SATURADA"
+        }
+        for k, v in corrections.items():
+            for i in range(len(match)):
+                if match[i] in k:
+                    if v not in match:
+                        match[i] = v
+                    else:
+                        match.pop(i)
         return match
+
 
     def filter_right_words(self, words, confidence_threshold=0.7):
         words_set = set()
@@ -51,7 +61,7 @@ class OcrPass(DetectionPass):
             cleaned_word = cleaned_word.replace('0', 'O').replace('1', 'I')
             word_upper = cleaned_word.upper()
             match = difflib.get_close_matches(word_upper, self.options, cutoff=confidence_threshold)
-            match = self.swap_to_right(match)
+            match = self.apply_corrections(match)
             words_set.update(match)
         return words_set
 
@@ -61,19 +71,22 @@ class OcrPass(DetectionPass):
         gray = cv2.cvtColor(crop_image, cv2.COLOR_BGR2GRAY)
         blur = cv2.GaussianBlur(gray, (3, 3), 0)  # TODO: Possível necessidade de ajustes
         otsu = cv2.threshold(blur, 0, 255, cv2.THRESH_OTSU)[1]
-
-        # cv2.imshow(f"OTSU {x,y}", otsu)
-        # transformed = self.thick(otsu)
-
+        successful_opts = set()
         words_set = set()
+        _contour = None
+
         for opt in self.ocr_options:
             custom_config = f'--psm {opt}'
-            text = pytesseract.image_to_string(otsu, config=custom_config)
+            text = pytesseract.image_to_string(otsu, config=custom_config) # TODO: ADICIONAR LINGUA PORTUGUESA
+            contour_area = None
 
             word = self.filter_right_words(text.split())
-
             words_set.update(word)
-        return words_set
+            if len(words_set) > 0:
+                successful_opts.add(opt)
+                contour_area = cv2.contourArea(contour)
+                break
+        return words_set, successful_opts, contour_area
     @profile
     def run(self, start_input: ContoursData) -> OcrData:
         image = self.get_original_image()
@@ -82,12 +95,22 @@ class OcrPass(DetectionPass):
         # for contour in contours:
         #     words_set = self.process_contour(contour, image)
 
-        with mp.Pool(processes=self.number_cores) as pool:
+        with mp.Pool(processes=self.number_cores) as pool: # TODO: EVITAR ITERAR SOBRE VARIAS CONTORNOS
+            # TODO: CRIAR UMA ESTRATEGIA, CASO ENCONTRADO ITERAR APENAS DOS CONTORNOS PROXIMOS!
             results = pool.starmap(self.process_contour, [(contour, image) for contour in start_input.contours])
-
         # Unir os resultados de todos os processos
-        words_set = set().union(*results)
-        return OcrData(words_set)
+        words_set = set()
+        successful_opts = set()
+        area_contours = []
+        contour_area = None
+        for result in results:
+            words_set.update(result[0])  # Unir as palavras
+            successful_opts.update(result[1])  # Unir as opções bem-sucedidas
+            contour_area = result[2]
+            if contour_area is not None:
+                area_contours.append(contour_area)
+
+        return OcrData(words_set, successful_opts, len(start_input.contours), area_contours)
 
     def thick(self, image):
         negated = cv2.bitwise_not(image)
