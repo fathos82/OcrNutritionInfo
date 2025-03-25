@@ -52,11 +52,14 @@ def get_result_from_excel(df, name_video):
     # Formata o resultado
     formated_result = str(result[0]).split(',')[-1].upper().strip()
     formated_result =  ''.join(
-        c if c == 'ç' else c for c in unicodedata.normalize('NFD', formated_result)
-        if unicodedata.category(c) != 'Mn' or c == 'ç'
+        c if c == 'Ç' else c for c in unicodedata.normalize('NFD', formated_result)
+        if unicodedata.category(c) != 'Mn' or c == 'Ç'
     )
+    formated_result_arr = formated_result.split('E')
+    formated_result_arr = map(str.strip, formated_result_arr)
 
-    return formated_result.split('e')
+
+    return formated_result_arr
 
 
 def save_or_update_table(new_data, file_path='./project/res/result/tabela_resultados.xlsx'):
@@ -144,8 +147,12 @@ def run(video_name):
     save_or_update_table(new_df)
 
 # TODO: RODAR ATE FIM DO VIDEO COM TODAS OPÇOES DE OCR A NOITE
-for i in range(42, 137):
+for i in range(1, 137):
     try:
         run('Vídeo ' + str(i))
     except:
         continue
+
+
+# Porcentagem  de opções de ocr que levaram a inferencia incorretas
+# Porcentagem  de opções de ocr que levaram a inferencia corretas

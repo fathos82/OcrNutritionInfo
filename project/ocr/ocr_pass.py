@@ -47,6 +47,7 @@ class OcrPass(DetectionPass):
         for k, v in corrections.items():
             for i in range(len(match)):
                 if match[i] in k:
+
                     if v not in match:
                         match[i] = v
                     else:
@@ -85,7 +86,7 @@ class OcrPass(DetectionPass):
             if len(words_set) > 0:
                 successful_opts.add(opt)
                 contour_area = cv2.contourArea(contour)
-                break
+                # break
         return words_set, successful_opts, contour_area
     @profile
     def run(self, start_input: ContoursData) -> OcrData:
