@@ -1,10 +1,6 @@
-import os
-import unicodedata
-from os import waitid_result
-from time import time, process_time
+from time import time
 
 import cv2
-from django.contrib.messages import success
 from websockets.sync.connection import Connection
 
 from app.ocr.ocr_pass import OcrData
@@ -49,7 +45,8 @@ def run(**kwargs):
         #     continue
         if socket is not None:
             socket.ping()
-        result: OcrData = pipeline.run(ImageData.from_image(resize_image(frame)))
+        # TODO: Padronize tamanho com -> resize_image(frame)
+        result: OcrData =  pipeline.run(ImageData.from_image(frame))
 
         result_set.update(result.word_set)
         count_contours += result.len_contours

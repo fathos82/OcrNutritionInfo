@@ -5,7 +5,7 @@ from project.pipeline import DetectionPass
 
 
 class FilterByArea(DetectionPass):
-    def __init__(self, min_area=200, max_area=999999999):
+    def __init__(self, min_area=150, max_area=999999999):
         super().__init__()
         self.min_area = min_area
         self.max_area = max_area

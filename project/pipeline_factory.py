@@ -11,6 +11,7 @@ from project.pipeline import Pipeline
 
 class PipelineVariation(Enum):
     PIPELINE_1 = 1
+    PIPELINE_OCR_5 = 2
 
 class PipelineFactory:
     @staticmethod
@@ -18,3 +19,5 @@ class PipelineFactory:
         match pipeline_variation:
             case(PipelineVariation.PIPELINE_1):
                 return Pipeline().add_passes(Cropper(0.8), BlackFilter, FilterMaskByArea, FindContours, FilterByArea, OcrPass)
+            case PipelineVariation.PIPELINE_OCR_5:
+                return Pipeline().add_passes(Cropper(0.8), BlackFilter, FilterMaskByArea, FindContours, FilterByArea, OcrPass(ocr_options=[5]))

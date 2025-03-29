@@ -86,7 +86,7 @@ class OcrPass(DetectionPass):
             if len(words_set) > 0:
                 successful_opts.add(opt)
                 contour_area = cv2.contourArea(contour)
-                # break
+                break
         return words_set, successful_opts, contour_area
     @profile
     def run(self, start_input: ContoursData) -> OcrData:
