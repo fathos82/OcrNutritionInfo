@@ -1,10 +1,7 @@
 import cv2
 
-from project.cv.find_contours import ContoursData
-from project.pipeline import DetectionPass, O, IOComponent
-from project.utils.image_data import ImageData
-
-
+from app.cv.find_contours import ContoursData
+from project.pipeline import DetectionPass
 
 
 class FilterByArea(DetectionPass):

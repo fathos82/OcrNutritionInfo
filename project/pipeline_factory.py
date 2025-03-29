@@ -1,0 +1,20 @@
+from enum import Enum
+
+from app.cv.black_filter import BlackFilter
+from app.cv.cropper import Cropper
+from app.cv.filter_by_area import FilterByArea
+from app.cv.filter_mask_by_area import FilterMaskByArea
+from app.cv.find_contours import FindContours
+from app.ocr.ocr_pass import OcrPass
+from project.pipeline import Pipeline
+
+
+class PipelineVariation(Enum):
+    PIPELINE_1 = 1
+
+class PipelineFactory:
+    @staticmethod
+    def create_pipeline(pipeline_variation: PipelineVariation) -> Pipeline:
+        match pipeline_variation:
+            case(PipelineVariation.PIPELINE_1):
+                return Pipeline().add_passes(Cropper(0.8), BlackFilter, FilterMaskByArea, FindContours, FilterByArea, OcrPass)

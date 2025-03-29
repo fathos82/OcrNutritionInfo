@@ -1,0 +1,9 @@
+version: '3.8'
+services:
+  ocr-nutrition-client:
+    build:
+      context: .
+      dockerfile:  client.Dockerfile
+    deploy:
+      replicas: 2
+
