@@ -2,9 +2,6 @@ from abc import ABC, abstractmethod
 from copy import copy
 from typing import List, Type, TypeVar, Generic, Union
 
-from line_profiler_pycharm import profile
-
-
 
 class IOComponent(ABC):
     pass

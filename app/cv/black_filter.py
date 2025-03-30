@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-from line_profiler_pycharm import profile
 
 
 
@@ -11,7 +10,6 @@ from project.utils.image_data import ImageData
 
 
 class BlackFilter(DetectionPass):
-    @profile
     def run(self, input_data: ImageData) -> ImageData:
         img = input_data.image
 

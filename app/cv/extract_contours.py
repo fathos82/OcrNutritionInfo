@@ -1,6 +1,6 @@
 import cv2
 
-from project.cv.find_contours import ContoursData
+from app.cv.find_contours import ContoursData
 from project.pipeline import DetectionPass, I, O, IOComponent
 
 
