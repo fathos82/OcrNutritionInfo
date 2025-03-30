@@ -15,7 +15,7 @@ import pandas as pd
 
 
 
-def run(**kwargs):
+async def run(**kwargs):
     video_path = kwargs['video_path']
     pipeline: Pipeline = kwargs['pipeline']
     test_name = kwargs.get('test_name', None)
@@ -44,7 +44,8 @@ def run(**kwargs):
         # if i % skip_frames == 0:
         #     continue
         if socket is not None:
-            socket.ping()
+            print("ping")
+            await socket.ping()
         # TODO: Padronize tamanho com -> resize_image(frame)
         result: OcrData =  pipeline.run(ImageData.from_image(frame))
 
@@ -52,12 +53,16 @@ def run(**kwargs):
         count_contours += result.len_contours
         options.update(result.options)
         area_contours.extend(result.area_contours)
+        print(result_set)
 
         if len(result_set) > 0 and time_to_find is None:
+            print("time to find")
+            time_to_find = time()
             time_to_find = get_time_code(cap.get(cv2.CAP_PROP_POS_MSEC))
             print("Time to find:", time_to_find)
             break
     end = time()
+    print("Elapsed time:", end - start_time)
 
     # Carregando o Excel com os resultados esperados
     df = pd.read_excel("res/Planilha_Videos_Resultados.xlsx")

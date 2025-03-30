@@ -37,7 +37,6 @@ class Pipeline:
                 self.passes.append(detection_pass)
         return self
 
-    @profile
     def run(self, image_data: IOComponent) -> IOComponent:
         current_input = image_data
         self.original_image = image_data
