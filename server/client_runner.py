@@ -27,13 +27,14 @@ class ClientRunner(Runner):
         asyncio.run(self.run_client())
 
     async def process_tasks(self, uri):
-        async with websockets.connect(uri, ping_interval=5) as websocket:
+        async with websockets.connect(uri, ping_interval=2) as websocket:
             print("Conectado ao servidor")
             video = []
             result = None
             p = None
 
             while True:
+                # await websocket.ping()
 
                 # Se houver um processo em execução, aguarde até que ele termine
                 if p is not None:
