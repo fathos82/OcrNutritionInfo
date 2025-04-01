@@ -1,0 +1,2 @@
+./res/result/*
+!res/result/.gitkeep

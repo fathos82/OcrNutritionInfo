@@ -8,12 +8,10 @@ import pytesseract
 import difflib
 import multiprocessing as mp
 
-from line_profiler_pycharm import profile
 
 from app.cv.find_contours import ContoursData
 from project.pipeline import DetectionPass
 from project.pipeline import IOComponent
-from project.utils.image_data import ImageData
 
 
 # TODO: Temporary Constructor
@@ -88,7 +86,6 @@ class OcrPass(DetectionPass):
                 contour_area = cv2.contourArea(contour)
                 break
         return words_set, successful_opts, contour_area
-    @profile
     def run(self, start_input: ContoursData) -> OcrData:
         image = self.get_original_image()
 
