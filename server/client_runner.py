@@ -1,3 +1,4 @@
+import multiprocessing
 import os
 import tempfile
 import json
@@ -9,74 +10,80 @@ import numpy as np
 from project.pipeline_factory import PipelineFactory
 from project.run_pipeline import run
 from project.runner import Runner
+from multiprocessing import Process
+from project.runner_configuration import RunnerConfiguration
 
 
 class ClientRunner(Runner):
+    def __init__(self, configs: RunnerConfiguration):
+        super().__init__(configs)
+        self.pipeline = PipelineFactory.create_pipeline(self.config.pipeline_variation)
+        self.queue = multiprocessing.Queue()
+        self.process = None
+        self.video_frames = []
+
     def run(self):
         asyncio.run(self.run_client())
 
-    async def process_tasks(self, uri):
-        async with websockets.connect(uri, ping_interval=None) as websocket:
-            print("Conectado ao servidor")
-            video = []
+    async def process_tasks(self, websocket):
+        print("Conectado ao servidor")
 
-            while True:
-                    # Recebe a tarefa do servidor
-                frame_bytes = await websocket.recv()
+        while True:
+            if self.process and not self.process.is_alive():
+                await self.handle_completed_process(websocket)
+                continue
 
-                # Se os dados recebidos não forem uma string, processamos como um frame
-                if not isinstance(frame_bytes, str):
-                    if len(video) == 1:
-                        print("Coletando dados da tarefa.")
+            frame_bytes = await websocket.recv()
+            if isinstance(frame_bytes, str):
+                await self.start_processing(frame_bytes)
+            else:
+                self.collect_frame(frame_bytes)
 
-                    frame_np = np.frombuffer(frame_bytes, dtype=np.uint8)
-                    frame = cv2.imdecode(frame_np, cv2.IMREAD_COLOR)
-                    video.append(frame)
+    async def handle_completed_process(self, websocket):
+        self.process.join()
+        result = self.queue.get()
+        await websocket.send(json.dumps(result))
+        print(f"Resultado enviado: {result}")
+        self.reset_state()
 
-                else:
-                    print("Dados coletados.")
-                    print("Iniciando processamento para detecção dos rótulos")
+    async def start_processing(self, task_name):
+        print("Iniciando processamento de vídeo")
+        video_path = self.save_video()
+        self.process = Process(target=run, args=(self.pipeline,), kwargs={
+            'video_path': video_path,
+            'test_name': task_name,
+            'queue': self.queue
+        })
+        self.process.start()
 
-                    # Criando um arquivo temporário para salvar o vídeo
-                    with tempfile.NamedTemporaryFile('w+b', suffix=".mp4", delete=True) as temp_file:
-                        height, width, _ = video[0].shape
-                        video_writer = cv2.VideoWriter(
-                            temp_file.name, cv2.VideoWriter_fourcc(*'mp4v'), 20.0, (width, height)
-                        )
+    def collect_frame(self, frame_bytes):
+        frame = cv2.imdecode(np.frombuffer(frame_bytes, dtype=np.uint8), cv2.IMREAD_COLOR)
+        self.video_frames.append(frame)
+        print(f"Frame recebido. Total: {len(self.video_frames)} frames")
 
-                        for frame in video:
-                            video_writer.write(frame)
+    def save_video(self):
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
+        height, width, _ = self.video_frames[0].shape
+        writer = cv2.VideoWriter(temp_file.name, cv2.VideoWriter_fourcc(*'mp4v'), 20.0, (width, height))
 
-                        video_writer.release()
-                        temp_file.seek(0)
+        for frame in self.video_frames:
+            writer.write(frame)
+        writer.release()
 
-                        # Executando a pipeline de processamento
-                        pipeline = PipelineFactory.create_pipeline(self.config.pipeline_variation)
-                        data = await run(
-                            pipeline=pipeline,
-                            video_path=temp_file.name,
-                            test_name=frame_bytes,
-                            socket=websocket
-                        )
+        return temp_file.name
 
-                        print("Detecções finalizadas.\nEnviando dados para o servidor.")
-                        json_data = json.dumps(data)
-                        video = []
-
-                        print("Enviando dados para o servidor.")
-                        await websocket.send(json_data)
-                        print(f"Resultado enviado:\n{json_data}")
-
+    def reset_state(self):
+        self.video_frames.clear()
+        self.process = None
 
     async def run_client(self):
-        host = os.getenv('HOST', 'localhost')
-        port = os.getenv('PORT', '8765')
-        uri = f"ws://{host}:{port}"  # Endereço do servidor WebSocket
+        uri = f"ws://{os.getenv('HOST', 'localhost')}:{os.getenv('PORT', '8765')}"
         print(f"Conectando a {uri}")
 
         while True:
             try:
-                await self.process_tasks(uri)
+                async with websockets.connect(uri, ping_interval=5) as websocket:
+                    await self.process_tasks(websocket)
             except (websockets.exceptions.ConnectionClosedError, websockets.exceptions.InvalidStatusCode, OSError) as e:
-                print(f"Erro de conexão: {e}, tentando novamente em 5 segundos...")
+                print(f"⚠ Erro de conexão: {e}. Tentando novamente em 5 segundos...")
                 await asyncio.sleep(5)

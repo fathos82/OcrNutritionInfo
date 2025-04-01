@@ -42,7 +42,7 @@ def save_or_update_table(new_data, base_bath='res/result/', file_name='tabela_re
     else:
         updated_df = pd.DataFrame(new_data)
 
-    updated_df.to_excel(base_bath, index=False)
+    updated_df.to_excel(file_path, index=False)
     print(updated_df)
     return base_bath
 

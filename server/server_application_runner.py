@@ -71,6 +71,8 @@ class ServerApplicationRunner(Runner):
                 print(f"Dados da tarefa task '{task} foram enviadas para cliente {websocket.remote_address}")
                 resolving_task = True
                 result = await asyncio.wait_for(websocket.recv(), timeout=60 * 10)
+                print(self.config.processing_name)
+
                 save_or_update_table(json.loads(result),file_name=self.config.processing_name)
                 resolving_task = False
                 print(f"Resposta recebida de {websocket.remote_address} referente a {task}.")

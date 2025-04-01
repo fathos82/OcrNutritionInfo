@@ -1,3 +1,5 @@
+import multiprocessing
+import os.path
 from time import time
 
 import cv2
@@ -15,14 +17,17 @@ import pandas as pd
 
 
 
-async def run(**kwargs):
+def run(pipeline, **kwargs):
     video_path = kwargs['video_path']
-    pipeline: Pipeline = kwargs['pipeline']
+    # pipeline: Pipeline = kwargs['pipeline']
     test_name = kwargs.get('test_name', None)
-    socket:Connection = kwargs.get('socket', None)
+    queue:multiprocessing.Queue= kwargs['queue']
+    print(test_name)
 
     if test_name is None:
         test_name = get_name_from_path(video_path)
+    else:
+        test_name = get_name_from_path(test_name)
 
     skip_frames = 2
 
@@ -35,6 +40,8 @@ async def run(**kwargs):
     area_contours = []
     start_time = time()
     # Processando o vídeo
+    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) + 1
+    print(frame_count)
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
@@ -43,9 +50,7 @@ async def run(**kwargs):
         # i += 1
         # if i % skip_frames == 0:
         #     continue
-        if socket is not None:
-            print("ping")
-            await socket.ping()
+
         # TODO: Padronize tamanho com -> resize_image(frame)
         result: OcrData =  pipeline.run(ImageData.from_image(frame))
 
@@ -53,11 +58,9 @@ async def run(**kwargs):
         count_contours += result.len_contours
         options.update(result.options)
         area_contours.extend(result.area_contours)
-        print(result_set)
 
         if len(result_set) > 0 and time_to_find is None:
             print("time to find")
-            time_to_find = time()
             time_to_find = get_time_code(cap.get(cv2.CAP_PROP_POS_MSEC))
             print("Time to find:", time_to_find)
             break
@@ -68,7 +71,6 @@ async def run(**kwargs):
     df = pd.read_excel("res/Planilha_Videos_Resultados.xlsx")
 
     expected_results = set(get_result_from_excel(df, test_name))
-    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     # Calculando os resultados
     process_time = end - start_time
     median_contour = count_contours // frame_count
@@ -86,6 +88,7 @@ async def run(**kwargs):
         "Área dos Contornos": [", ".join(map(str, area_contours))],
         "Qntd Média de Contornos": [median_contour]
     }
+    os.remove(video_path)
+    queue.put(new_data)
 
-
-    return new_data
+    # return new_data

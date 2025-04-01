@@ -1,5 +1,6 @@
 import os
 
+import cv2
 
 from project.pandas_utils import contains_register, get_name_from_path, save_or_update_table
 from project.pipeline_factory import PipelineFactory, PipelineVariation
@@ -28,3 +29,8 @@ class AppRunner(Runner):
             print('Processing video {}'.format(video_path))
             result = run(video_path=video_path,pipeline=pipeline)
             save_or_update_table(result, self.config.processing_name)
+    def run_pipeline(self, video_path):
+        cap = cv2.VideoCapture(video_path)
+
+        # while True:
+
