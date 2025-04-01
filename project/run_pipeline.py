@@ -17,9 +17,9 @@ import pandas as pd
 
 
 
-def run(pipeline, **kwargs):
+def run( **kwargs):
     video_path = kwargs['video_path']
-    # pipeline: Pipeline = kwargs['pipeline']
+    pipeline: Pipeline = kwargs['pipeline']
     test_name = kwargs.get('test_name', None)
     queue:multiprocessing.Queue= kwargs['queue']
     print(test_name)
@@ -88,6 +88,7 @@ def run(pipeline, **kwargs):
         "Área dos Contornos": [", ".join(map(str, area_contours))],
         "Qntd Média de Contornos": [median_contour]
     }
+    print(new_data)
     os.remove(video_path)
     queue.put(new_data)
 

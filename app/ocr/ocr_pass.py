@@ -32,7 +32,7 @@ class OcrData(IOComponent):
 class OcrPass(DetectionPass):
     def __init__(self, ocr_options: List[int] = [6, 12,5], number_cores=mp.cpu_count()//2):
         super().__init__()
-        self.options = ["SODIO", "AÇUCAR ADICIONADO", "GORDURA SATURADA", "AÇUCAR", "AGUCAR", "]", "SATURADA", "GORDURA"]
+        self.options = ["SODIO", "SÓDIO","AÇUCAR ADICIONADO", "GORDURA SATURADA", "AÇUCAR", "AGUCAR", "SATURADA", "GORDURA"]
         self.ocr_options = ocr_options
         self.number_cores = number_cores
 
@@ -40,7 +40,8 @@ class OcrPass(DetectionPass):
 
         corrections = {
             frozenset(["AÇUCAR", "AGUCAR", "ADICIONADO, AÇUCAR ADICIONADO"]): "AÇUCAR ADICIONADO",
-            frozenset(["SATURADA", "GORDURA"]): "GORDURA SATURADA"
+            frozenset(["SATURADA", "GORDURA"]): "GORDURA SATURADA",
+            frozenset(["SÓDIO"]): "SODIO"
         }
         for k, v in corrections.items():
             for i in range(len(match)):

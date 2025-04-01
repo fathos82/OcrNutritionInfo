@@ -17,11 +17,9 @@ def get_result_from_excel(df, name_video):
         return []  # Retorna uma lista vazia caso não encontre o vídeo
 
     # Formata o resultado
+    formated_result =  str(result[0]).replace('ú', 'u')
     formated_result = str(result[0]).split(',')[-1].upper().strip()
-    formated_result =  ''.join(
-        c if c == 'Ç' else c for c in unicodedata.normalize('NFD', formated_result)
-        if unicodedata.category(c) != 'Mn' or c == 'Ç'
-    )
+
     formated_result_arr = formated_result.split('E')
     formated_result_arr = map(str.strip, formated_result_arr)
 

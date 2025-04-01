@@ -11,79 +11,94 @@ from project.pipeline_factory import PipelineFactory
 from project.run_pipeline import run
 from project.runner import Runner
 from multiprocessing import Process
+
 from project.runner_configuration import RunnerConfiguration
 
 
 class ClientRunner(Runner):
-    def __init__(self, configs: RunnerConfiguration):
+    def __init__(self, configs:RunnerConfiguration):
         super().__init__(configs)
+        # TODO: ISTO DEVE SER UMA CONFIG PADRÃO:
         self.pipeline = PipelineFactory.create_pipeline(self.config.pipeline_variation)
         self.queue = multiprocessing.Queue()
-        self.process = None
-        self.video_frames = []
+        self.can_run = False
 
     def run(self):
         asyncio.run(self.run_client())
 
-    async def process_tasks(self, websocket):
-        print("Conectado ao servidor")
+    async def process_tasks(self, uri):
+        async with websockets.connect(uri, ping_interval=5) as websocket:
+            print("Conectado ao servidor")
+            video = []
+            result = None
+            p = None
 
-        while True:
-            if self.process and not self.process.is_alive():
-                await self.handle_completed_process(websocket)
-                continue
+            while True:
 
-            frame_bytes = await websocket.recv()
-            if isinstance(frame_bytes, str):
-                await self.start_processing(frame_bytes)
-            else:
-                self.collect_frame(frame_bytes)
+                # Se houver um processo em execução, aguarde até que ele termine
+                if p is not None:
+                    if not p.is_alive():
+                        print("Pronto")
+                        p.join()  # Aguarda a finalização do processo
+                        result = self.queue.get()  # Obtém o resultado da fila
+                        print(f"Resultado do processamento: {result}")
 
-    async def handle_completed_process(self, websocket):
-        self.process.join()
-        result = self.queue.get()
-        await websocket.send(json.dumps(result))
-        print(f"Resultado enviado: {result}")
-        self.reset_state()
+                        # Enviar os dados para o servidor
+                        json_data = json.dumps(result)
+                        await websocket.send(json_data)
+                        print(f"Resultado enviado:\n{json_data}")
+                        # Resetar variáveis para processar um novo vídeo
+                        video = []
+                        self.can_run = False
+                        p = None  # Resetar `p` para permitir um novo processo
 
-    async def start_processing(self, task_name):
-        print("Iniciando processamento de vídeo")
-        video_path = self.save_video()
-        self.process = Process(target=run, args=(self.pipeline,), kwargs={
-            'video_path': video_path,
-            'test_name': task_name,
-            'queue': self.queue
-        })
-        self.process.start()
+                    continue  # Volta ao loop para continuar a execução
 
-    def collect_frame(self, frame_bytes):
-        frame = cv2.imdecode(np.frombuffer(frame_bytes, dtype=np.uint8), cv2.IMREAD_COLOR)
-        self.video_frames.append(frame)
-        print(f"Frame recebido. Total: {len(self.video_frames)} frames")
+                # Coletar os frames do WebSocket
+                frame_bytes = await websocket.recv()
 
-    def save_video(self):
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
-        height, width, _ = self.video_frames[0].shape
-        writer = cv2.VideoWriter(temp_file.name, cv2.VideoWriter_fourcc(*'mp4v'), 20.0, (width, height))
+                if not isinstance(frame_bytes, str):
+                    if len(video) == 1:
+                        print("Coletando dados da tarefa.")
 
-        for frame in self.video_frames:
-            writer.write(frame)
-        writer.release()
+                    frame_np = np.frombuffer(frame_bytes, dtype=np.uint8)
+                    frame = cv2.imdecode(frame_np, cv2.IMREAD_COLOR)
+                    video.append(frame)
 
-        return temp_file.name
+                else:
+                    print("Dados coletados. Iniciando processamento para detecção dos rótulos")
 
-    def reset_state(self):
-        self.video_frames.clear()
-        self.process = None
+                    # Criando um arquivo temporário para salvar o vídeo
+                    with tempfile.NamedTemporaryFile('w+b', suffix=".mp4", delete=False) as temp_file:
+                        height, width, _ = video[0].shape
+                        video_writer = cv2.VideoWriter(
+                            temp_file.name, cv2.VideoWriter_fourcc(*'mp4v'), 20.0, (width, height)
+                        )
+
+                        if not self.can_run:
+                            for frame in video:
+                                video_writer.write(frame)
+                            video_writer.release()
+                            temp_file.seek(0)
+
+                            # Iniciando um novo processo
+                            p = Process(target=run, kwargs={
+                                'pipeline': self.pipeline,
+                                'video_path': temp_file.name,
+                                'test_name': str(frame_bytes),
+                                'queue': self.queue
+                            })
+                            p.start()
 
     async def run_client(self):
-        uri = f"ws://{os.getenv('HOST', 'localhost')}:{os.getenv('PORT', '8765')}"
+        host = os.getenv('HOST', 'localhost')
+        port = os.getenv('PORT', '8765')
+        uri = f"ws://{host}:{port}"  # Endereço do servidor WebSocket
         print(f"Conectando a {uri}")
 
         while True:
             try:
-                async with websockets.connect(uri, ping_interval=5) as websocket:
-                    await self.process_tasks(websocket)
+                await self.process_tasks(uri)
             except (websockets.exceptions.ConnectionClosedError, websockets.exceptions.InvalidStatusCode, OSError) as e:
-                print(f"⚠ Erro de conexão: {e}. Tentando novamente em 5 segundos...")
+                print(f"Erro de conexão: {e}, tentando novamente em 5 segundos...")
                 await asyncio.sleep(5)
