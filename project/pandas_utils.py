@@ -17,7 +17,7 @@ def get_result_from_excel(df, name_video):
         return []  # Retorna uma lista vazia caso não encontre o vídeo
 
     # Formata o resultado
-    formated_result =  str(result[0]).replace('ú', 'u')
+    formated_result =  str(result[0]).replace('ú', 'u').replace('ó', 'o')
     formated_result = str(result[0]).split(',')[-1].upper().strip()
 
     formated_result_arr = formated_result.split('E')
@@ -36,7 +36,10 @@ def save_or_update_table(new_data, base_bath='res/result/', file_name='tabela_re
     file_path = os.path.join(base_bath, file_name+'.xlsx')
     if os.path.exists(file_path):
         existing_df = pd.read_excel(file_path)  # Substituído para ler arquivo Excel
-        updated_df = pd.concat([existing_df, pd.DataFrame(new_data)], ignore_index=True)
+        if not contains_register(new_data['Id']):
+            updated_df = pd.concat([existing_df, pd.DataFrame(new_data)], ignore_index=True)
+        else:
+            updated_df = existing_df
     else:
         updated_df = pd.DataFrame(new_data)
 

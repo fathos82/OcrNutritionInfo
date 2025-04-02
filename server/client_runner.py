@@ -22,6 +22,8 @@ class ClientRunner(Runner):
         self.pipeline = PipelineFactory.create_pipeline(self.config.pipeline_variation)
         self.queue = multiprocessing.Queue()
         self.can_run = False
+        self.unsent_results = []
+
 
     def run(self):
         asyncio.run(self.run_client())
@@ -32,6 +34,22 @@ class ClientRunner(Runner):
             video = []
             result = None
             p = None
+
+            if len(self.unsent_results) > 0:
+                for unsent_result in self.unsent_results.copy():
+                    try:
+                        # Enviar os dados para o servidor
+                        json_data = json.dumps(unsent_result)
+                        await websocket.send(json_data)
+                        print(f"Resultado reenviado:\n{json_data}")
+                        self.unsent_results.remove(unsent_result)  # Remove após enviar
+                    except (websockets.exceptions.ConnectionClosedError,
+                            websockets.exceptions.InvalidStatusCode,
+                            OSError) as e:
+                        print(f"Erro ao enviar resultado não enviado: {e}")
+                        break  # Se o erro persistir, tenta novamente mais tarde
+            else:
+                    await websocket.send("SRP")
 
             while True:
                 # await websocket.ping()
@@ -45,10 +63,18 @@ class ClientRunner(Runner):
                         print(f"Resultado do processamento: {result}")
 
                         # Enviar os dados para o servidor
-                        json_data = json.dumps(result)
-                        await websocket.send(json_data)
-                        print(f"Resultado enviado:\n{json_data}")
-                        # Resetar variáveis para processar um novo vídeo
+                        self.unsent_results.append(result)
+
+
+
+                        try:
+                            await websocket.ping()
+                            json_data = json.dumps(result)
+                            await websocket.send(json_data)
+                            self.unsent_results.remove(result)
+                            print(f"Resultado enviado:\n{json_data}")
+                        except websockets.ConnectionClosedError:
+                            print("Falha ao enviar ping: Conexão fechada.")
                         video = []
                         self.can_run = False
                         p = None  # Resetar `p` para permitir um novo processo
@@ -100,6 +126,8 @@ class ClientRunner(Runner):
         while True:
             try:
                 await self.process_tasks(uri)
+
             except (websockets.exceptions.ConnectionClosedError, websockets.exceptions.InvalidStatusCode, OSError) as e:
+
                 print(f"Erro de conexão: {e}, tentando novamente em 5 segundos...")
                 await asyncio.sleep(5)

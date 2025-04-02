@@ -52,6 +52,17 @@ class ServerApplicationRunner(Runner):
         task = None
         resolving_task = False
         try:
+            result = await asyncio.wait_for(websocket.recv(), timeout=60)
+            if result == "SRP":
+                print("Cliente sem resultados pedentes.")
+            else:
+                result = json.loads(result)
+                save_or_update_table(result, file_name=self.config.processing_name)
+                resolving_task = False
+                await self.schedule_tasks()
+                print(f"Resposta recebida de {websocket.remote_address} referente a {task}.")
+
+
             while not self.task_queue.empty():
                 task = await self.task_queue.get()
                 print(f"Enviando task '{task}' para o cliente {websocket.remote_address}.")
@@ -70,9 +81,7 @@ class ServerApplicationRunner(Runner):
                 await websocket.send(task)
                 print(f"Dados da tarefa task '{task} foram enviadas para cliente {websocket.remote_address}")
                 resolving_task = True
-                result = await asyncio.wait_for(websocket.recv(), timeout=60 * 10)
-                print(self.config.processing_name)
-
+                result = await websocket.recv()
                 save_or_update_table(json.loads(result),file_name=self.config.processing_name)
                 resolving_task = False
                 print(f"Resposta recebida de {websocket.remote_address} referente a {task}.")
