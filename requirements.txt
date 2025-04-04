@@ -32,3 +32,4 @@ pytesseract==0.3.13
 websockets
 opencv-python~=4.10.0.84
 pandas
+openpyxl
