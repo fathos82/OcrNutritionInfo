@@ -5,8 +5,8 @@ import numpy as np
 
 import cv2
 import numpy as np
-from project.pipeline import DetectionPass
-from project.utils.image_data import ImageData
+from structure.pipeline import DetectionPass
+from structure.utils.image_data import ImageData
 
 
 class BlackFilter(DetectionPass):

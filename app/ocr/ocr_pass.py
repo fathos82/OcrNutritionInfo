@@ -10,8 +10,8 @@ import multiprocessing as mp
 
 
 from app.cv.find_contours import ContoursData
-from project.pipeline import DetectionPass
-from project.pipeline import IOComponent
+from structure.pipeline import DetectionPass
+from structure.pipeline import IOComponent
 
 
 # TODO: Temporary Constructor

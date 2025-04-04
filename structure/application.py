@@ -1,4 +1,4 @@
-from project.runner import Runner
+from structure.runner import Runner
 
 
 class Application:

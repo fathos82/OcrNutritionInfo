@@ -1,7 +1,7 @@
 import cv2
 
-from project.pipeline import DetectionPass, I, O, IOComponent
-from project.utils.image_data import ImageData
+from structure.pipeline import DetectionPass, I, O, IOComponent
+from structure.utils.image_data import ImageData
 
 
 class ContoursData(IOComponent):

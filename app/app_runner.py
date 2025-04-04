@@ -2,10 +2,10 @@ import os
 
 import cv2
 
-from project.pandas_utils import contains_register, get_name_from_path, save_or_update_table
-from project.pipeline_factory import PipelineFactory, PipelineVariation
-from project.run_pipeline import run
-from project.runner import Runner
+from structure.pandas_utils import contains_register, get_name_from_path, save_or_update_table
+from structure.pipeline_factory import PipelineFactory, PipelineVariation
+from structure.run_pipeline import run
+from structure.runner import Runner
 
 
 class AppRunner(Runner):

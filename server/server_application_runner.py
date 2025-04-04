@@ -1,5 +1,5 @@
-from project.pandas_utils import *
-from project.runner import Runner
+from structure.pandas_utils import *
+from structure.runner import Runner
 import asyncio
 import json
 import os
@@ -8,7 +8,7 @@ from enum import verify
 import cv2
 import websockets
 
-from project.runner_configuration import RunnerConfiguration
+from structure.runner_configuration import RunnerConfiguration
 
 
 class ServerApplicationRunner(Runner):
@@ -53,7 +53,7 @@ class ServerApplicationRunner(Runner):
         resolving_task = False
         try:
             result = await asyncio.wait_for(websocket.recv(), timeout=60)
-            if result == "SRP":
+            if isinstance(result, str) and result == "SRP":
                 print("Cliente sem resultados pedentes.")
             else:
                 result = json.loads(result)

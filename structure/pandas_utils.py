@@ -36,7 +36,8 @@ def save_or_update_table(new_data, base_bath='res/result/', file_name='tabela_re
     file_path = os.path.join(base_bath, file_name+'.xlsx')
     if os.path.exists(file_path):
         existing_df = pd.read_excel(file_path)  # Substituído para ler arquivo Excel
-        if not contains_register(new_data['Id']):
+        print(new_data['Id'])
+        if not contains_register(new_data['Id'][0]):
             updated_df = pd.concat([existing_df, pd.DataFrame(new_data)], ignore_index=True)
         else:
             updated_df = existing_df

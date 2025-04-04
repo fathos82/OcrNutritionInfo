@@ -3,14 +3,14 @@ from time import time
 
 import cv2
 
-from project.cv.filter_by_area import FilterByArea
-from project.cv.filter_not_squares import FilterNotSquares
-from project.cv.find_contours import FindContours
-from project.cv.preprocess_pass import PreProcessPass
-from project.ocr.ocr_pass import OcrPass, OcrData
-from project.ocr.ocr_pass_tester import OcrPassTester
-from project.pipeline import Pipeline, DetectionPass
-from project.utils.image_data import ImageData
+from structure.cv.filter_by_area import FilterByArea
+from structure.cv.filter_not_squares import FilterNotSquares
+from structure.cv.find_contours import FindContours
+from structure.cv.preprocess_pass import PreProcessPass
+from structure.ocr.ocr_pass import OcrPass, OcrData
+from structure.ocr.ocr_pass_tester import OcrPassTester
+from structure.pipeline import Pipeline, DetectionPass
+from structure.utils.image_data import ImageData
 
 # TODO: Dividir em duas stretegias, rapida(FS) e devagar(FA)
 #TODO: MultThreading Partion,

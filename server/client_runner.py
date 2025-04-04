@@ -6,13 +6,14 @@ import asyncio
 import websockets
 import cv2
 import numpy as np
+from websockets import ConnectionClosedOK
 
-from project.pipeline_factory import PipelineFactory
-from project.run_pipeline import run
-from project.runner import Runner
+from structure.pipeline_factory import PipelineFactory
+from structure.run_pipeline import run
+from structure.runner import Runner
 from multiprocessing import Process
 
-from project.runner_configuration import RunnerConfiguration
+from structure.runner_configuration import RunnerConfiguration
 
 
 class ClientRunner(Runner):
@@ -67,14 +68,11 @@ class ClientRunner(Runner):
 
 
 
-                        try:
-                            await websocket.ping()
-                            json_data = json.dumps(result)
-                            await websocket.send(json_data)
-                            self.unsent_results.remove(result)
-                            print(f"Resultado enviado:\n{json_data}")
-                        except websockets.ConnectionClosedError:
-                            print("Falha ao enviar ping: Conexão fechada.")
+                        await websocket.ping()
+                        json_data = json.dumps(result)
+                        await websocket.send(json_data)
+                        self.unsent_results.remove(result)
+
                         video = []
                         self.can_run = False
                         p = None  # Resetar `p` para permitir um novo processo
@@ -127,7 +125,8 @@ class ClientRunner(Runner):
             try:
                 await self.process_tasks(uri)
 
-            except (websockets.exceptions.ConnectionClosedError, websockets.exceptions.InvalidStatusCode, OSError) as e:
+            except (websockets.exceptions.ConnectionClosedError,websockets.exceptions.ConnectionClosedOK, websockets.exceptions.InvalidStatusCode, OSError) as e:
+                print(e)
 
                 print(f"Erro de conexão: {e}, tentando novamente em 5 segundos...")
                 await asyncio.sleep(5)

@@ -1,6 +1,6 @@
 import numpy as np
 
-from project.pipeline import IOComponent
+from structure.pipeline import IOComponent
 
 import cv2
 class ImageData(IOComponent):

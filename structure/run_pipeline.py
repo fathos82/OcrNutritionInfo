@@ -6,10 +6,10 @@ import cv2
 from websockets.sync.connection import Connection
 
 from app.ocr.ocr_pass import OcrData
-from project.cv_utils import get_time_code, resize_image
-from project.pandas_utils import get_name_from_path, get_result_from_excel, save_or_update_table
-from project.pipeline import Pipeline
-from project.utils.image_data import ImageData
+from structure.cv_utils import get_time_code, resize_image
+from structure.pandas_utils import get_name_from_path, get_result_from_excel, save_or_update_table
+from structure.pipeline import Pipeline
+from structure.utils.image_data import ImageData
 import pandas as pd
 
 

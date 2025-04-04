@@ -1,7 +1,7 @@
 import numpy as np
 
-from project.pipeline import DetectionPass, IOComponent
-from project.utils.image_data import ImageData
+from structure.pipeline import DetectionPass, IOComponent
+from structure.utils.image_data import ImageData
 
 import cv2
 

@@ -1,6 +1,6 @@
 from abc import abstractmethod, ABC
 
-from project.runner_configuration import RunnerConfiguration
+from structure.runner_configuration import RunnerConfiguration
 
 
 class Runner(ABC):
