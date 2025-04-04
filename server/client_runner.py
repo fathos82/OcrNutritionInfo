@@ -65,12 +65,11 @@ class ClientRunner(Runner):
 
                         # Enviar os dados para o servidor
                         self.unsent_results.append(result)
-
-
-
-                        await websocket.ping()
+                        pong = await websocket.ping()
+                        await asyncio.wait_for(pong, timeout=5)
                         json_data = json.dumps(result)
                         await websocket.send(json_data)
+                        print("Resultado Enviado")
                         self.unsent_results.remove(result)
 
                         video = []
@@ -116,7 +115,7 @@ class ClientRunner(Runner):
                             p.start()
 
     async def run_client(self):
-        host = os.getenv('HOST', 'localhost')
+        host = os.getenv('HOST', '192.168.0.174')
         port = os.getenv('PORT', '8765')
         uri = f"ws://{host}:{port}"  # Endereço do servidor WebSocket
         print(f"Conectando a {uri}")
