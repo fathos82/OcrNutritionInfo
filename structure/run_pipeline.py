@@ -63,7 +63,7 @@ def run( **kwargs):
             print("time to find")
             time_to_find = get_time_code(cap.get(cv2.CAP_PROP_POS_MSEC))
             print("Time to find:", time_to_find)
-            break
+            # break
     end = time()
     print("Elapsed time:", end - start_time)
 

@@ -18,7 +18,7 @@ def get_result_from_excel(df, name_video):
 
     # Formata o resultado
     formated_result =  str(result[0]).replace('ú', 'u').replace('ó', 'o')
-    formated_result = str(result[0]).split(',')[-1].upper().strip()
+    formated_result = str(formated_result).split(',')[-1].upper().strip()
 
     formated_result_arr = formated_result.split('E')
     formated_result_arr = map(str.strip, formated_result_arr)

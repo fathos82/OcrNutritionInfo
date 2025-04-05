@@ -12,6 +12,7 @@ from structure.pipeline import Pipeline
 class PipelineVariation(Enum):
     PIPELINE_1 = 1
     PIPELINE_OCR_5 = 2
+    PIPELINE_OCR_6 = 3
 
 class PipelineFactory:
     @staticmethod
@@ -21,3 +22,5 @@ class PipelineFactory:
                 return Pipeline().add_passes(Cropper(0.8), BlackFilter, FilterMaskByArea, FindContours, FilterByArea, OcrPass)
             case PipelineVariation.PIPELINE_OCR_5:
                 return Pipeline().add_passes(Cropper(0.8), BlackFilter, FilterMaskByArea, FindContours, FilterByArea, OcrPass(ocr_options=[5]))
+            case PipelineVariation.PIPELINE_OCR_6:
+                return Pipeline().add_passes(Cropper(0.8), BlackFilter, FilterMaskByArea, FindContours, FilterByArea, OcrPass(ocr_options=[6]))
