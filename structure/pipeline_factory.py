@@ -14,6 +14,7 @@ class PipelineVariation(Enum):
     PIPELINE_1 = '1'
     PIPELINE_OCR_5 = '2'
     PIPELINE_OCR_6 = '3'
+    PIPELINE_OCR_12 = '4'
 
 class PipelineFactory:
     @staticmethod
@@ -25,5 +26,7 @@ class PipelineFactory:
                 return Pipeline().add_passes(Cropper(0.8), BlackFilter, FilterMaskByArea, FindContours, FilterByArea, OcrPass(ocr_options=[5]))
             case PipelineVariation.PIPELINE_OCR_6:
                 return Pipeline().add_passes(Cropper(0.8), BlackFilter, FilterMaskByArea, FindContours, FilterByArea, OcrPass(ocr_options=[6]))
-            case PipelineVariation.NULL_PIPELINE:
+            case PipelineVariation.PIPELINE_OCR_12:
+                return Pipeline().add_passes(Cropper(0.8), BlackFilter, FilterMaskByArea, FindContours, FilterByArea, OcrPass(ocr_options=[12]))
+            case PipelineVariation.NULL_PIPELINE, _:
                 return Pipeline()

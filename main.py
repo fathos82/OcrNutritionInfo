@@ -3,6 +3,7 @@ import argparse
 from structure.application import Application
 from structure.pipeline_factory import PipelineVariation
 from structure.runners.runner_configuration import RunnerConfiguration
+from structure.runners.runner_factory import RunnerVariation
 
 
 def parse_arguments():
@@ -23,7 +24,7 @@ def parse_arguments():
     parser.add_argument(
         "--runner",
         required=True,
-        choices=['server', 'local', 'client'],
+        choices=[r.value for r in RunnerVariation],
         help="Ambiente de execução"
     )
 
