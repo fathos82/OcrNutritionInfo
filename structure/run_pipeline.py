@@ -90,4 +90,3 @@ def run( **kwargs):
     os.remove(video_path)
     queue.put(new_data)
 
-    # return new_data
