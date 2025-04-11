@@ -1,5 +1,4 @@
 import os
-import unicodedata
 
 import pandas as pd
 
@@ -26,11 +25,14 @@ def get_result_from_excel(df, name_video):
 
     return formated_result_arr
 
-def contains_register(name_video):
-    if not os.path.exists('./res/result/tabela_resultados.xlsx'):
+def contains_register(name_video, base_bath='res/result/', file_name='tabela_resultados'):
+    file_path = os.path.join(base_bath, file_name+'.xlsx')
+
+    if not os.path.exists(file_path):
         return False
-    df = pd.read_excel('res/result/tabela_resultados.xlsx')
+    df = pd.read_excel(file_path)
     return (df['Id'] == name_video).any()
+
 def save_or_update_table(new_data, base_bath='res/result/', file_name='tabela_resultados'):
     # Verificando se o arquivo já existe
     file_path = os.path.join(base_bath, file_name+'.xlsx')

@@ -7,7 +7,7 @@ import pytesseract
 import difflib
 import multiprocessing as mp
 
-from app.cv.find_contours import ContoursData
+from local.cv.find_contours import ContoursData
 from structure.pipeline import DetectionPass
 from structure.pipeline import IOComponent
 

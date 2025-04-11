@@ -1,8 +1,53 @@
-from app.app_runner import AppRunner
+import argparse
+
 from structure.application import Application
 from structure.pipeline_factory import PipelineVariation
-from structure.runner_configuration import RunnerConfiguration
-from server.server_application_runner import ServerApplicationRunner
+from structure.runners.runner_configuration import RunnerConfiguration
 
-config = RunnerConfiguration(pipeline_variation=PipelineVariation.PIPELINE_OCR_6, processing_name='Teste 02')
-Application(ServerApplicationRunner(config)).run()
+
+def parse_arguments():
+    """Configura e retorna os argumentos da linha de comando"""
+    parser = argparse.ArgumentParser(description="Configuração do Runner de Pipeline")
+
+    parser.add_argument(
+        "--processing-name",
+        required=True,
+        help="Nome do processamento"
+    )
+    parser.add_argument(
+        "--pipeline",
+        required=True,
+        choices=[str(p.value ) for p in PipelineVariation],
+        help="Tipo de pipeline a ser executado"
+    )
+    parser.add_argument(
+        "--runner",
+        required=True,
+        choices=['server', 'local', 'client'],
+        help="Ambiente de execução"
+    )
+
+    return parser.parse_args()
+
+
+def create_configuration(args):
+    """Cria uma instância de RunnerConfiguration a partir dos argumentos"""
+    return RunnerConfiguration(
+        processing_name=args.processing_name,
+        pipeline=args.pipeline,
+        runner=args.runner
+    )
+
+
+def main():
+    # Parse arguments
+    args = parse_arguments()
+
+    # Create configuration
+    config = create_configuration(args)
+    Application(config).run()
+
+
+
+if __name__ == "__main__":
+    main()

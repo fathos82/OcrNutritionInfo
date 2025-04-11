@@ -10,17 +10,16 @@ from websockets import ConnectionClosedOK
 
 from structure.pipeline_factory import PipelineFactory
 from structure.run_pipeline import run
-from structure.runner import Runner
 from multiprocessing import Process
 
-from structure.runner_configuration import RunnerConfiguration
+from structure.runners.runner import Runner
+from structure.runners.runner_configuration import RunnerConfiguration
 
 
 class ClientRunner(Runner):
     def __init__(self, configs:RunnerConfiguration):
         super().__init__(configs)
         # TODO: ISTO DEVE SER UMA CONFIG PADRÃO:
-        self.pipeline = PipelineFactory.create_pipeline(self.config.pipeline_variation)
         self.queue = multiprocessing.Queue()
         self.can_run = False
         self.unsent_results = []
@@ -115,7 +114,7 @@ class ClientRunner(Runner):
                             p.start()
 
     async def run_client(self):
-        host = os.getenv('HOST', '192.168.0.174')
+        host = os.getenv('HOST', 'localhost')
         port = os.getenv('PORT', '8765')
         uri = f"ws://{host}:{port}"  # Endereço do servidor WebSocket
         print(f"Conectando a {uri}")

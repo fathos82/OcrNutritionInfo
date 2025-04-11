@@ -1,20 +1,18 @@
 import multiprocessing
 import os.path
 from time import time
+from typing import cast
 
 import cv2
 from websockets.sync.connection import Connection
 
-from app.ocr.ocr_pass import OcrData
-from structure.cv_utils import get_time_code, resize_image
-from structure.pandas_utils import get_name_from_path, get_result_from_excel, save_or_update_table
+from structure.ocr.ocr_pass import OcrData
 from structure.pipeline import Pipeline
+from structure.utils.cv_utils import get_time_code
 from structure.utils.image_data import ImageData
 import pandas as pd
 
-
-
-
+from structure.utils.pandas_utils import get_name_from_path, get_result_from_excel
 
 
 def run( **kwargs):
@@ -52,7 +50,7 @@ def run( **kwargs):
         #     continue
 
         # TODO: Padronize tamanho com -> resize_image(frame)
-        result: OcrData =  pipeline.run(ImageData.from_image(frame))
+        result: OcrData =  cast(OcrData, pipeline.run(ImageData.from_image(frame)))
 
         result_set.update(result.word_set)
         count_contours += result.len_contours

@@ -1,7 +1,8 @@
-from app.app_runner import AppRunner
+from main import RunnerConfiguration
 from structure.application import Application
 from structure.pipeline_factory import PipelineVariation
-from structure.runner_configuration import RunnerConfiguration
-from server.client_runner import ClientRunner
-config = RunnerConfiguration(pipeline_variation=PipelineVariation.PIPELINE_OCR_6, processing_name='Teste 02')
-Application(ClientRunner(config)).run()
+from structure.runners.runner_factory import RunnerVariation
+from structure.runners.server.client_runner import ClientRunner
+
+config = RunnerConfiguration(pipeline=PipelineVariation.PIPELINE_OCR_6, runner=RunnerVariation.CLIENT)
+Application(config).run()

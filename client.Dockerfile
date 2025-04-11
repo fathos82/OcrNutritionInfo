@@ -12,4 +12,7 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-CMD ["python", "client_main.py"]
+ENTRYPOINT ["sh", "-c", "python main.py \
+    --pipeline \"${PIPELINE_ARG:-deploy}\" \
+    --runner client \
+    --processing-name \"${NAME_ARG:-default-process}\""]

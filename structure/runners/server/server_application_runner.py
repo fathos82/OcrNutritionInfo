@@ -1,5 +1,4 @@
-from structure.pandas_utils import *
-from structure.runner import Runner
+
 import asyncio
 import json
 import os
@@ -8,7 +7,9 @@ from enum import verify
 import cv2
 import websockets
 
-from structure.runner_configuration import RunnerConfiguration
+from structure.runners.runner import Runner
+from structure.runners.runner_configuration import RunnerConfiguration
+from structure.utils.pandas_utils import contains_register, get_name_from_path, save_or_update_table
 
 
 class ServerApplicationRunner(Runner):
@@ -24,7 +25,7 @@ class ServerApplicationRunner(Runner):
     async def schedule_tasks(self):
         paths = os.listdir(self.base_path)
         for video_file in paths:
-            if not video_file.endswith('.mp4') or contains_register(get_name_from_path(video_file)):
+            if not video_file.endswith('.mp4') or contains_register(get_name_from_path(video_file), self.processing_name):
                 continue
             video_path = os.path.join(self.base_path, video_file)
             await self.schedule_task(self.base_path + "/" + video_file)
@@ -57,7 +58,7 @@ class ServerApplicationRunner(Runner):
                 print("Cliente sem resultados pedentes.")
             else:
                 result = json.loads(result)
-                save_or_update_table(result, file_name=self.config.processing_name)
+                save_or_update_table(result, file_name=self.processing_name)
                 resolving_task = False
                 await self.schedule_tasks()
                 print(f"Resposta recebida de {websocket.remote_address} referente a {task}.")
@@ -82,7 +83,7 @@ class ServerApplicationRunner(Runner):
                 print(f"Dados da tarefa task '{task} foram enviadas para cliente {websocket.remote_address}")
                 resolving_task = True
                 result = await websocket.recv()
-                save_or_update_table(json.loads(result),file_name=self.config.processing_name)
+                save_or_update_table(json.loads(result),file_name=self.processing_name)
                 resolving_task = False
                 print(f"Resposta recebida de {websocket.remote_address} referente a {task}.")
                 self.task_queue.task_done()
