@@ -15,6 +15,7 @@ class PipelineVariation(Enum):
     PIPELINE_OCR_5 = '2'
     PIPELINE_OCR_6 = '3'
     PIPELINE_OCR_12 = '4'
+    PIPELINE_CONTOURS = '5'
 
 class PipelineFactory:
     @staticmethod
@@ -30,3 +31,5 @@ class PipelineFactory:
                 return Pipeline().add_passes(Cropper(0.8), BlackFilter, FilterMaskByArea, FindContours, FilterByArea, OcrPass(ocr_options=[12]))
             case PipelineVariation.NULL_PIPELINE, _:
                 return Pipeline()
+            case PipelineVariation.PIPELINE_CONTOURS:
+                return Pipeline().add_passes(BlackFilter, FilterMaskByArea, FindContours, FilterByArea)

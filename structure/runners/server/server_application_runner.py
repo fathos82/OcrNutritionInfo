@@ -2,8 +2,6 @@
 import asyncio
 import json
 import os
-from enum import verify
-
 import cv2
 import websockets
 
