@@ -25,5 +25,7 @@ class BlackFilter(DetectionPass):
 
         # Aplicar threshold binário diretamente
         _, binaryImage = cv2.threshold(kChannel, 160, 255, cv2.THRESH_BINARY)
+        # cv2.imshow("Black Filter", binaryImage)
+        # cv2.waitKey(0)
 
         return ImageData.from_image(binaryImage)

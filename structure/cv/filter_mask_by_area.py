@@ -13,8 +13,7 @@ class FilterMaskByArea(DetectionPass):
         self.minArea = minArea
     def run(self, input_data: ImageData) -> ImageData:
         mask = input_data.image
-        componentsNumber, labeledImage, componentStats, componentCentroids = \
-            cv2.connectedComponentsWithStats(mask, connectivity=4)
+        componentsNumber, labeledImage, componentStats, componentCentroids = cv2.connectedComponentsWithStats(mask, connectivity=4)
 
         # Get the indices/labels of the remaining components based on the area stat
         # (skip the background component at index 0)

@@ -11,6 +11,99 @@ from structure.utils.image_data import ImageData
 from structure.utils.pandas_utils import contains_register, get_name_from_path, save_or_update_table
 
 
+def hybrid_scoring_optimized(img,
+                             min_dark_pixels=0.05,
+                             min_laplacian=50,
+                             max_light_pixels=0.9):
+    """
+    Versão otimizada que elimina resize e Laplacian duplicados.
+    Retorna 0.0 para imagens descartáveis, senão retorna o score completo.
+    """
+    if img is None:
+        return 0.0
+
+    # --- Fase 1: Pré-processamento base (192x192) ---
+    img = cv2.resize(img, (192, 192))
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) if len(img.shape) == 3 else img
+
+    # --- Filtro Rápido (usando a imagem já redimensionada) ---
+    # 1. Verifica excesso de pixels claros
+    light_pixels = np.sum(gray > 200) / (gray.size + 1e-6)
+    # if light_pixels > max_light_pixels:
+    #     return 0.0, 0,0,0
+
+    # 2. Verifica nitidez (Laplacian usado tanto para filtro quanto para score)
+    lap_var = cv2.Laplacian(gray, cv2.CV_64F).var()
+    # if lap_var < min_laplacian:
+    #     return 0.0, 0,0,0
+
+    # 3. Verifica pixels escuros
+    dark_pixels = np.sum(gray < 50) / (gray.size + 1e-6)
+    # if dark_pixels < min_dark_pixels:
+    #     return 0.0, 0,0,0
+
+    # --- Fase 2: Score Completo (reaproveita variáveis já calculadas) ---
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(4, 4))
+    normalized = clahe.apply(gray)
+    inverted = 255 - normalized
+    blurred = cv2.GaussianBlur(inverted, (3, 3), 0)
+
+    # Reaproveita o lap_var do filtro (evita recálculo)
+    _, thresh = cv2.threshold(normalized, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    dark_ratio = np.sum(thresh == 0) / (thresh.size + 1e-6)
+    edges = cv2.Canny(normalized, 30, 100)
+    edge_density = np.sum(edges > 0) / (edges.size + 1e-6)
+
+    score = (dark_ratio * 0.5) + (lap_var * 0.3) + (edge_density * 0.2)
+    return float(score), dark_pixels, lap_var, light_pixels
+
+def hybrid_scoring(img,
+                  min_dark_pixels=0.05,
+                  min_laplacian=50,
+                  max_light_pixels=0.9,
+                  fast_check_size=64):
+    """
+    Combina pré-filtro e cálculo de score em um único passo.
+    Retorna 0.0 se a imagem for descartável, caso contrário, retorna o score completo.
+    """
+    if img is None:
+        return 0.0
+
+    # --- Fase 1: Pré-filtro Rápido (64x64) ---
+    img_small = cv2.resize(img, (fast_check_size, fast_check_size))
+    gray = cv2.cvtColor(img_small, cv2.COLOR_BGR2GRAY) if len(img_small.shape) == 3 else img_small
+
+    # 1. Descarta imagens com excesso de pixels claros (fundo branco)
+    light_pixels = np.sum(gray > 200) / (gray.size + 1e-6)
+    if light_pixels > max_light_pixels:
+        return 0.0
+
+    # 2. Descarta imagens borradas (Laplaciano)
+    lap_var = cv2.Laplacian(gray, cv2.CV_64F).var()
+    if lap_var < min_laplacian:
+        return 0.0
+
+    # 3. Descarta imagens sem pixels escuros (sem texto/fundo)
+    dark_pixels = np.sum(gray < 50) / (gray.size + 1e-6)
+    if dark_pixels < min_dark_pixels:
+        return 0.0
+
+    # --- Fase 2: Score Completo (192x192) ---
+    # (Só executa se passar no pré-filtro)
+    img = cv2.resize(img, (192, 192))
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(4, 4))
+    normalized = clahe.apply(gray)
+    inverted = 255 - normalized
+    blurred = cv2.GaussianBlur(inverted, (3, 3), 0)
+    lap_var = cv2.Laplacian(blurred, cv2.CV_64F).var()
+    _, thresh = cv2.threshold(normalized, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    dark_ratio = np.sum(thresh == 0) / (thresh.size + 1e-6)
+    edges = cv2.Canny(normalized, 30, 100)
+    edge_density = np.sum(edges > 0) / (edges.size + 1e-6)
+
+    score = (dark_ratio * 0.5) + (lap_var * 0.3) + (edge_density * 0.2)
+    return float(score)
+
 def prefilter_image(img, min_dark_pixels=0.05, min_laplacian=50, max_light_pixels=0.9):
     """
     Retorna False se a imagem for "lixo" (descarte imediato).
@@ -43,6 +136,8 @@ def prefilter_image(img, min_dark_pixels=0.05, min_laplacian=50, max_light_pixel
 #todo: melhor parametro de pieces
 #todo: mexer no parametro de resize
 # todo: testar pre-filter amanha
+# todo: decidir se redimensiona
+
 
 def optimized_deep_score(img):
     if img is None:
@@ -111,6 +206,7 @@ class LocalRunner(Runner):
 
     def process(self,cap, start, end, pieces):
         max_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        print("max frames:", max_frames)
         pieces_percent = (max_frames / pieces)
         start_frame = int(start * pieces_percent)
         end_frame = int(end * pieces_percent)
@@ -120,10 +216,12 @@ class LocalRunner(Runner):
 
         cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
         contours_crops = []
+        start_time = time.time()
         while cap.get(cv2.CAP_PROP_POS_FRAMES) != end_frame:
             ret, frame = cap.read()
             if not ret or frame is None:
                 break
+            # frame = cv2.resize(frame, (640, 480), interpolation=cv2.INTER_AREA)
             image_data = ImageData.from_image(frame)
             processed_data = self.pipeline.run(image_data)
             contours = processed_data.contours
@@ -131,13 +229,24 @@ class LocalRunner(Runner):
                 x, y, w, h = cv2.boundingRect(contour)
                 crop = frame[y:y + h, x:x + w]
                 crop = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+
+                # if prefilter_image(crop):  # <--- AQUI É O FILTRO!
+                #     contours_crops.append(crop)
                 contours_crops.append(crop)
-        contours_sorted = [(crop, deep_score_image_for_text_detection(crop)) for crop in contours_crops]
-        contours_sorted.sort(key=lambda x: x[1], reverse=True)
+
+        contours_sorted = [(crop, hybrid_scoring_optimized(crop)) for crop in contours_crops]
+        contours_sorted.sort(key=lambda x: x[1][0], reverse=True)
+        end_time = time.time()
+        print("time: ", end_time - start_time)
         print(len(contours_sorted))
-        for cnt, _ in contours_sorted:
+        for cnt, r in contours_sorted:
             cv2.imshow('crop', cnt)
             cv2.waitKey(0)
+            print("imagem: ")
+            print("dark_pixels: "+str(r[1]))
+            print("lap_var: "+str(r[2]))
+            print("light_pixels: "+str(r[3]))
+            print()
 
         return False
 
@@ -146,9 +255,10 @@ class LocalRunner(Runner):
         start_time = time.time()
         end = math.ceil(pieces / 2)
         start = end - 1
-
         success = self.process(cap,start, end, pieces)
         previous_start = start
+        raise RuntimeError()
+
         next_end = end
         if not success:
             while not success:
@@ -179,8 +289,8 @@ class LocalRunner(Runner):
 
     def run(self):
         video_paths = self.load_videos_path()
-        print(video_paths[27])
-        cap = cv2.VideoCapture(video_paths[1])  # Assume o mesmo vídeo de teste
+        print(video_paths[9])
+        cap = cv2.VideoCapture(video_paths[16])  # Assume o mesmo vídeo de teste
         self.run_pipeline(cap, pieces=5)
         #
         # # Coleta todos os recortes
