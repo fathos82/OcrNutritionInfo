@@ -29,18 +29,18 @@ def hybrid_scoring_optimized(img,
     # --- Filtro Rápido (usando a imagem já redimensionada) ---
     # 1. Verifica excesso de pixels claros
     light_pixels = np.sum(gray > 200) / (gray.size + 1e-6)
-    # if light_pixels > max_light_pixels:
-    #     return 0.0, 0,0,0
+    if light_pixels > max_light_pixels:
+        return 0.0, 0,0,0
 
     # 2. Verifica nitidez (Laplacian usado tanto para filtro quanto para score)
     lap_var = cv2.Laplacian(gray, cv2.CV_64F).var()
-    # if lap_var < min_laplacian:
-    #     return 0.0, 0,0,0
+    if lap_var < min_laplacian:
+        return 0.0, 0,0,0
 
     # 3. Verifica pixels escuros
     dark_pixels = np.sum(gray < 50) / (gray.size + 1e-6)
-    # if dark_pixels < min_dark_pixels:
-    #     return 0.0, 0,0,0
+    if dark_pixels < min_dark_pixels:
+        return 0.0, 0,0,0
 
     # --- Fase 2: Score Completo (reaproveita variáveis já calculadas) ---
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(4, 4))
@@ -137,6 +137,7 @@ def prefilter_image(img, min_dark_pixels=0.05, min_laplacian=50, max_light_pixel
 #todo: mexer no parametro de resize
 # todo: testar pre-filter amanha
 # todo: decidir se redimensiona
+# todo: analisar 2, 4, 5
 
 
 def optimized_deep_score(img):
@@ -184,7 +185,7 @@ def deep_score_image_for_text_detection(img):
     edges = cv2.Canny(normalized, 50, 150)
     edge_density = np.sum(edges > 0) / (edges.size + 1e-6)
     score = (dark_ratio * 0.5) + (lap_var * 0.3) + (edge_density * 0.2)
-    return float(score)
+    return float(score), 0, 0, 0
 
 def score_image_for_text_detection(img):
     if img is None:
@@ -234,7 +235,7 @@ class LocalRunner(Runner):
                 #     contours_crops.append(crop)
                 contours_crops.append(crop)
 
-        contours_sorted = [(crop, hybrid_scoring_optimized(crop)) for crop in contours_crops]
+        contours_sorted = [(crop, deep_score_image_for_text_detection(crop)) for crop in contours_crops]
         contours_sorted.sort(key=lambda x: x[1][0], reverse=True)
         end_time = time.time()
         print("time: ", end_time - start_time)
@@ -289,81 +290,36 @@ class LocalRunner(Runner):
 
     def run(self):
         video_paths = self.load_videos_path()
-        print(video_paths[9])
-        cap = cv2.VideoCapture(video_paths[16])  # Assume o mesmo vídeo de teste
-        self.run_pipeline(cap, pieces=5)
-        #
-        # # Coleta todos os recortes
-        # start_time = time.time()
-        # while cap.isOpened():
-        #     ret, frame = cap.read()
-        #     if not ret or frame is None:
-        #         break
-        #     image_data = ImageData.from_image(frame)
-        #     processed_data = self.pipeline.run(image_data)
-        #     contours = processed_data.contours
-        #     for contour in contours:
-        #         x, y, w, h = cv2.boundingRect(contour)
-        #         crop = frame[y:y + h, x:x + w]
-        #         crop = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
-        #         self.contours_crops.append(crop)
-        # cap.release()
-        # print('Total time:', time.time() - start_time)
-        #
-        #
-        # # Medição de tempo + ordenação (Algoritmo Original)
-        # start_time = time.time()
-        # scored_original = [(crop, score_image_for_text_detection(crop)) for crop in self.contours_crops]
-        # scored_original.sort(key=lambda x: x[1], reverse=True)
-        # original_time = time.time() - start_time
-        #
-        # # Medição de tempo + ordenação (Algoritmo Atualizado)
-        # start_time = time.time()
-        # scored_deep = [(crop, deep_score_image_for_text_detection(crop)) for crop in self.contours_crops]
-        # scored_deep.sort(key=lambda x: x[1], reverse=True)
-        # deep_time = time.time() - start_time
-        # # Medição de tempo + ordenação (Algoritmo Atualizado)
-        # start_time = time.time()
-        # scored_optimized_deep = [(crop, optimized_deep_score(crop)) for crop in self.contours_crops]
-        # scored_optimized_deep.sort(key=lambda x: x[1], reverse=True)
-        # scored_optimized_deep_time = time.time() - start_time
-        #
-        # # Exibe resultados
-        # print(f"\n🔹 Algoritmo Original: {len(scored_original)} recortes | Tempo: {original_time:.4f}s")
-        # print(f"🔹 Algoritmo Atualizado: {len(scored_deep)} recortes | Tempo: {deep_time:.4f}s")
-        # print(f"🔹 Algoritmo optimized Atualizado: {len(scored_optimized_deep)} recortes | Tempo: {scored_optimized_deep_time:.4f}s")
-        #
-        # print(f"🔎 Diferença: {deep_time - original_time:.4f}s (+{(deep_time/original_time - 1)*100:.1f}%)")
-        #
-        # # Exemplo: Top 3 scores de cada algoritmo
-        # print("\n🏆 Top 3 (Original):")
-        # for i, (crop, score) in enumerate(scored_original[:3]):
-        #     print(f"  {i+1}. Score: {score:.2f}")
-        #
-        # print("\n🏆 Top 3 (Atualizado):")
-        # for i, (crop, score) in enumerate(scored_deep[:3]):
-        #     print(f"  {i+1}. Score: {score:.2f}")
-        #
-        #
-        # print("\n🏆 Top 3 (optimized):")
-        # for i, (crop, score) in enumerate(scored_optimized_deep[:3]):
-        #     print(f"  {i+1}. Score: {score:.2f}")
+        video_path = video_paths[28]
+        print(video_path)
+        cap = cv2.VideoCapture(video_path)  # Assume o mesmo vídeo de teste
+        self.run_pipeline(cap, pieces=2)
 
 
 
-# 🔹 Algoritmo Original: 2592 recortes | Tempo: 0.4657s
-# 🔹 Algoritmo Atualizado: 2592 recortes | Tempo: 2.0072s
-# 🔎 Diferença: 1.5415s (+331.0%)
-#
-# 🏆 Top 3 (Original):
-#   1. Score: 7282.38
-#   2. Score: 7272.60
-#   3. Score: 7133.19
-#
-# 🏆 Top 3 (Atualizado):
-#   1. Score: 126.92
-#   2. Score: 114.08
-#   3. Score: 113.68
-
-
-
+# 6 bem sucesso com filtro
+# 7 bem sucesso com filtro
+# 8 bem sucesso com filtro
+# 9 analise
+# 10 parcial sucesso com filtro
+# 11 analise
+# 12 bem sucesso com filtro
+# 13 bem sucesso com filtro
+# 13 bem sucesso com filtro com ressalvar (vale analise)
+# 14 bem sucesso com filtro
+# 15 sem sucesso com filtro mas sucesso sem filtro otimo para ajuste!!!!!
+# 16 bem sucesso com filtro
+# 17 bem sucesso com filtro com ressalvar (vale analise)
+# 18 bem sucesso com filtro
+# 19 bem sucesso com filtro
+# 20 bem sucesso com filtro
+# 21 bem sucesso com filtro com ressalvar (vale analise)
+# 22 bem sucesso com filtro com ressalvar (vale analise)
+# 22 bem sucesso com filtro com ressalvar (vale analise)
+# 23 bem sucesso com filtro com ressalvar (vale analise)
+# 24 nao sucessido nem sem filtro (principal problema e o pre-processamento)
+# 25 sem sucesso com filtro mas sucesso sem filtro otimo para ajuste!!!!!
+# 26 bem sucesso com filtro
+# 27 bem sucesso com filtro
+# 28 bem sucesso com filtro
+# 29 bem sucesso com filtro
