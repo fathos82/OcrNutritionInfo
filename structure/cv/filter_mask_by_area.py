@@ -22,5 +22,6 @@ class FilterMaskByArea(DetectionPass):
         # Filter the labeled pixels based on the remaining labels,
         # assign pixel intensity to 255 (uint8) for the remaining pixels
         filteredImage = np.where(np.isin(labeledImage, remainingComponentLabels) == True, 255, 0).astype('uint8')
+        # cv2.imshow('mask', mask)
         # cv2.imshow('filteredImage', filteredImage)
-        return ImageData.from_image(mask)
+        return ImageData.from_image(filteredImage)

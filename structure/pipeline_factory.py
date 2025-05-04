@@ -32,4 +32,4 @@ class PipelineFactory:
             case PipelineVariation.NULL_PIPELINE, _:
                 return Pipeline()
             case PipelineVariation.PIPELINE_CONTOURS:
-                return Pipeline().add_passes(BlackFilter, FilterMaskByArea, FindContours, FilterByArea)
+                return Pipeline().add_passes(BlackFilter,  FindContours, FilterByArea)
