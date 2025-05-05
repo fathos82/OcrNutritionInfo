@@ -70,7 +70,6 @@ class OcrPredictor:
             # TODO: CRIAR UMA ESTRATEGIA, CASO ENCONTRADO ITERAR APENAS DOS CONTORNOS PROXIMOS!
             results = pool.starmap(self.process_contour, [ (contour, score) for contour, score in contours])
         # Unir os resultados de todos os processos
-        print(results)
         words_set = set()
         for result in results:
             words_set.update(result)
