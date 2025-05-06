@@ -5,16 +5,22 @@ from structure.pipeline import DetectionPass
 
 
 class FilterByArea(DetectionPass):
-    def __init__(self, min_area=100, max_area=5167):
+    def __init__(self, min_area_ratio=0.00031, max_area_ratio=0.0074):
         super().__init__()
-        self.min_area = min_area
-        self.max_area = max_area
+        self.min_area_ratio = min_area_ratio
+        self.max_area_ratio = max_area_ratio
 
     def run(self, input_data: ContoursData) -> ContoursData:
-        filtered_contours = list(filter(lambda c : self.max_area > cv2.contourArea(c) > self.min_area,input_data.contours))
-        # image = self.get_original_image()
-        # for contour in filtered_contours:
-        #     x, y, w, h = cv2.boundingRect(contour)
-        #     cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)
-        # cv2.imshow("image", image)
+        height, width = self.get_original_image().shape[:2]
+        image_area = width * height
+
+        min_area = image_area * self.min_area_ratio
+        max_area = image_area * self.max_area_ratio
+        print(max_area)
+
+        filtered_contours = list(filter(
+            lambda c: max_area > cv2.contourArea(c) > min_area,
+            input_data.contours
+        ))
+
         return ContoursData(filtered_contours)
