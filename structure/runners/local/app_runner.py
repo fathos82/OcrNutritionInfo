@@ -119,7 +119,7 @@ class LocalRunner(Runner):
 
     def run(self):
         video_paths = self.load_videos_path()
-        video_path = video_paths[5]
+        video_path = video_paths[0]
 
         self.run_pipeline(video_path, pieces=1)
 
